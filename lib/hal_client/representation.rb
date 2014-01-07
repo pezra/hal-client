@@ -1,4 +1,5 @@
 require 'forwardable'
+require 'addressable/template'
 
 class HalClient
   class Representation
@@ -23,8 +24,10 @@ class HalClient
       fetch(item_key, nil)
     end
 
-    def related(link_rel)
-      RepresentationSet.new embedded(link_rel) + linked(link_rel)
+    # If the link(s) are templated they will be expanded using
+    # `options` before the links are followed.
+    def related(link_rel, options = {})
+      RepresentationSet.new embedded(link_rel) + linked(link_rel, options)
     end
 
     def related_hrefs(link_rel)
@@ -39,8 +42,14 @@ class HalClient
       rare_repr.embedded.fetch(link_rel){[]}.map{|it| Representation.new hal_client, it}
     end
 
-    def linked(link_rel)
-      rare_repr.links.fetch(link_rel){[]}.map{|link| hal_client.get link.href }
+    def linked(link_rel, options = {})
+      rare_repr.links.fetch(link_rel){[]}.
+        map{|link| if link.templated?
+                     Addressable::Template.new(link.href).expand(options).to_s
+                   else
+                     link.href
+                   end }.
+        map {|href| hal_client.get href }
     end
 
   end
