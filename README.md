@@ -18,7 +18,13 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+    blog = HalClient.new.get("http://blog.me/")
+    blog.href # => "http://blog.me/"
+    blog.fetch("title") # => "A Great Blog"
+    blog.fetch("item") # => #<RepresentationSet:...>
+    blog.related("item") # => #<RepresentationSet:...>
+    post = blog.fetch("item").first # => #<Represenation:...>
+    post.href # => "http://blog.me/posts/1"
 
 ## Contributing
 
