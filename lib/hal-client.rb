@@ -1,0 +1,1 @@
+require 'hal_client'
