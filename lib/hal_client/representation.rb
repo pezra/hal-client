@@ -27,7 +27,12 @@ class HalClient
     # If the link(s) are templated they will be expanded using
     # `options` before the links are followed.
     def related(link_rel, options = {})
-      related_cache[[link_rel,options]] ||= RepresentationSet.new embedded(link_rel) + linked(link_rel, options)
+      related_cache[[link_rel,options]] ||=
+        begin
+          related = RepresentationSet.new embedded(link_rel) + linked(link_rel, options)
+          (raise KeyError, "No `#{link_rel}` relations found") if related.empty?
+          related
+        end
     end
 
     def related_hrefs(link_rel)
