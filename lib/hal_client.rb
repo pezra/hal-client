@@ -6,10 +6,19 @@ class HalClient
   autoload :Representation, 'hal_client/representation'
   autoload :RepresentationSet, 'hal_client/representation_set'
 
+  # Initializes a new client instance
+  #
+  # options - hash of configuration options
+  #   :accept - one or more content types that should be 
+  #     prepended to the `Accept` header field of each request.
   def initialize(options={})
     @default_accept = options.fetch(:accept, 'application/hal+json')
   end
 
+  # Returns a `Representation` of the resource identified by `url`.
+  #
+  # url - The URL of the resource of interest.
+  # options - set of options to pass to `RestClient#get`
   def get(url, options={})
     resp = RestClient.get url, rest_client_options(options)
     Representation.new self, MultiJson.load(resp)

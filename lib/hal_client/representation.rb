@@ -5,28 +5,60 @@ require 'hal_client'
 require 'hal_client/representation_set'
 
 class HalClient
+
+  # HAL representation of a single resource. Provides access to
+  # properties, links and embedded representations.
   class Representation
     extend Forwardable
 
+    # Create a new Representation
+    #
+    # hal_client - The HalClient instance to use when navigating.
+    # parsed_json - A hash structure representing a single HAL
+    #   document.
     def initialize(hal_client, parsed_json)
       @hal_client = hal_client
       @raw = parsed_json
     end
 
-    MISSING = Object.new
-
+    # Returns The value of the specified property or the specified
+    #   default value.
+    #
+    # name - The name of property of interest
+    # default - an optional object that should be return if the
+    #   specified property does not exist
+    # default_proc - an option proc that will be called with `name`
+    #  to produce default value if the specified property does not
+    #  exist
+    #
+    # Raises KeyError if the specified property does not exist
+    #   and no default nor default_proc is provided.
     def property(name, default=MISSING, &default_proc)
       default_proc ||= ->(_){ default} if default != MISSING
 
       raw.fetch(name.to_s, &default_proc)
     end
 
+    # Returns the URL of the resource this representation represents.
     def href
       link_section.fetch("self").fetch("href")
     end
 
-
-    def fetch(item_key, default=MISSING, &default_proc)
+    # Returns the value of the specified property or representations
+    #   of resources related via the specified link rel or the
+    #   specified default value.
+    #
+    # name_or_rel - The name of property or link rel of interest
+    # default - an optional object that should be return if the
+    #   specified property or link does not exist
+    # default_proc - an option proc that will be called with `name`
+    #  to produce default value if the specified property or link does not
+    #  exist
+    #
+    # Raises KeyError if the specified property or link does not exist
+    #   and no default nor default_proc is provided.
+    def fetch(name_or_rel, default=MISSING, &default_proc)
+      item_key = name_or_rel
       default_proc ||= ->(_){default} if default != MISSING
 
       property(item_key) {
@@ -34,12 +66,27 @@ class HalClient
       }
     end
 
-    def [](item_key)
+    # Returns the value of the specified property or representations
+    #   of resources related via the specified link rel or nil
+    #
+    # name_or_rel - The name of property or link rel of interest
+    def [](name_or_rel)
+      item_key = name_or_rel
       fetch(item_key, nil)
     end
 
-    # If the link(s) are templated they will be expanded using
-    # `options` before the links are followed.
+    # Returns representations of resources related via the specified
+    #   link rel or the specified default value.
+    #
+    # name_or_rel - The name of property or link rel of interest
+    # options - optional keys and values with which to expand any
+    #   templated links that are encountered
+    # default_proc - an option proc that will be called with `name`
+    #  to produce default value if the specified property or link does not
+    #  exist
+    #
+    # Raises KeyError if the specified link does not exist
+    #   and no default_proc is provided.
     def related(link_rel, options = {}, &default_proc)
       default_proc ||= ->(link_rel){
         raise KeyError, "No resources are related via `#{link_rel}`"
@@ -55,6 +102,18 @@ class HalClient
       end
     end
 
+    # Returns urls of resources related via the specified
+    #   link rel or the specified default value.
+    #
+    # name_or_rel - The name of property or link rel of interest
+    # options - optional keys and values with which to expand any
+    #   templated links that are encountered
+    # default_proc - an option proc that will be called with `name`
+    #  to produce default value if the specified property or link does not
+    #  exist
+    #
+    # Raises KeyError if the specified link does not exist
+    #   and no default_proc is provided.
     def related_hrefs(link_rel, options={}, &default_proc)
       default_proc ||= ->(link_rel){
         raise KeyError, "No resources are related via `#{link_rel}`"
@@ -74,6 +133,8 @@ class HalClient
 
     protected
     attr_reader :raw, :hal_client
+
+    MISSING = Object.new
 
     def link_section
       @link_section ||= raw.fetch("_links", {})
