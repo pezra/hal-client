@@ -1,11 +1,10 @@
 require_relative "../spec_helper"
 
-require "halibut"
 require "hal_client/representation"
 
 describe HalClient::Representation do
   describe ".new" do
-    let!(:return_val) { described_class.new(a_client, halibut_repr) }
+    let!(:return_val) { described_class.new(a_client, MultiJson.load(raw_repr)) }
     describe "return_val" do
       subject { return_val }
       it { should be_kind_of described_class }
@@ -20,6 +19,8 @@ describe HalClient::Representation do
     ,"link1": { "href": "http://example.com/bar" }
     ,"link2": { "href": "http://example.com/people{?name}"
                 ,"templated": true }
+    ,"link3": [{ "href": "http://example.com/link3-a" }
+               ,{ "href": "http://example.com/link3-b" }]
   }
   ,"_embedded": {
     "embed1": {
@@ -28,6 +29,7 @@ describe HalClient::Representation do
   }
 }
 HAL
+  subject(:repr) { described_class.new(a_client, MultiJson.load(raw_repr)) }
 
   describe "#property" do
     context "existent" do
@@ -36,7 +38,6 @@ HAL
     end
     context "non-existent" do
       it "raises exception" do
-        pending
         expect{repr.property 'wat'}.to raise_exception KeyError
       end
     end
@@ -70,11 +71,11 @@ HAL
     end
     context "non-existent item w/ default value" do
       subject { repr.fetch "wat", "whatevs" }
-      it { pending; should eq "whatevs" }
+      it { should eq "whatevs" }
     end
     context "non-existent item w/ default value generator" do
       subject { repr.fetch("wat"){|key| key+"gen" } }
-      it { pending; should eq "watgen" }
+      it { should eq "watgen" }
     end
   end
 
@@ -95,7 +96,7 @@ HAL
     end
     context "non-existent item w/o default" do
       subject { repr["wat"] }
-      it { pending; should be_nil }
+      it { should be_nil }
     end
   end
 
@@ -104,6 +105,12 @@ HAL
       subject { repr.related "link1" }
       it { should have(1).item }
       it { should include_representation_of "http://example.com/bar" }
+    end
+    context "for existent compound link" do
+      subject { repr.related "link3" }
+      it { should have(2).item }
+      it { should include_representation_of "http://example.com/link3-a" }
+      it { should include_representation_of "http://example.com/link3-b" }
     end
     context "for existent templated link" do
       subject { repr.related "link2", name: "bob" }
@@ -135,24 +142,24 @@ HAL
     end
     context "non-existent item w/o default" do
       it "raises exception" do
-        pending
         expect{repr.related_hrefs 'wat'}.to raise_exception KeyError
       end
     end
   end
 
 
-  subject(:repr) { described_class.new(a_client, halibut_repr) }
 
   let(:a_client) { HalClient.new }
-  let(:halibut_repr) { Halibut::Adapter::JSON.parse(raw_repr) }
-  let!(:bar_request) { stub_request(:get, "http://example.com/bar").
-    to_return body: %q|{"_links":{"self":{"href":"http://example.com/bar"}}}| }
-  let!(:baz_request) { stub_request(:get, "http://example.com/baz").
-    to_return body: %q|{"_links":{"self":{"href":"http://example.com/baz"}}}| }
-  let!(:people_request) { stub_request(:get, "http://example.com/people?name=bob").
-    to_return body: %q|{"_links":{"self":{"href":"http://example.com/people?name=bob"}}}| }
+  let!(:bar_request) { stub_identity_request("http://example.com/bar") }
+  let!(:baz_request) { stub_identity_request "http://example.com/baz" }
+  let!(:people_request) { stub_identity_request "http://example.com/people?name=bob" }
+  let!(:link3_a_request) { stub_identity_request "http://example.com/link3-a" }
+  let!(:link3_b_request) { stub_identity_request "http://example.com/link3-b" }
 
+  def stub_identity_request(url)
+    stub_request(:get, url).
+      to_return body: %Q|{"_links":{"self":{"href":#{url.to_json}}}}|
+  end
 
   RSpec::Matchers.define(:include_representation_of) do |url|
     match { |repr_set|
