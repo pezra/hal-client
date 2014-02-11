@@ -1,0 +1,101 @@
+require_relative '../spec_helper'
+
+require 'hal_client'
+require 'hal_client/representation'
+require 'hal_client/representation_set'
+
+describe HalClient::RepresentationSet do
+  describe "#new" do
+    let!(:return_val) { described_class.new([foo_repr, bar_repr]) }
+    it { should be_kind_of described_class }
+    it { should have(2).items }
+  end
+
+  subject(:repr_set) { described_class.new([foo_repr, bar_repr]) }
+
+  describe "#each" do
+    it "iterates over each item in the set" do
+      seen = []
+      subject.each {|it| seen << it}
+      expect(seen).to match_array [foo_repr, bar_repr]
+    end
+  end
+
+  its(:count) { should eq 2 }
+  its(:empty?) { should be_false }
+
+  describe "#any?" do
+    it "returns true if there are any" do
+      expect(subject.any?{|it| it == foo_repr }).to be_true
+    end
+    it "returns false if there aren't any" do
+      expect(subject.any?{|it| false }).to be_false
+    end
+  end
+
+  describe "#related" do
+    context "single target in each member" do
+      subject(:returned_val) { repr_set.related("spouse") }
+      it { should include_representation_of "http://example.com/foo-spouse" }
+      it { should include_representation_of "http://example.com/bar-spouse" }
+      it { should have(2).items }
+    end
+    context "multiple targets" do
+      subject(:returned_val) { repr_set.related("sibling") }
+      it { should include_representation_of "http://example.com/foo-brother" }
+      it { should include_representation_of "http://example.com/foo-sister" }
+      it { should include_representation_of "http://example.com/bar-brother" }
+      it { should have(3).items }
+    end
+    context "templated" do
+      subject(:returned_val) {pending; repr_set.related("cousin", distance: "first") }
+      it { should include_representation_of "http://example.com/foo-first-cousin" }
+      it { should include_representation_of "http://example.com/bar-paternal-first-cousin" }
+      it { should include_representation_of "http://example.com/bar-maternal-first-cousin" }
+      it { should have(3).items }
+    end
+  end
+
+  let(:a_client) { HalClient.new }
+
+  let(:foo_repr) { HalClient::Representation.new a_client, Halibut::Adapter::JSON.parse(foo_hal)}
+  let(:foo_hal) { <<-HAL }
+{ "_links":{
+    "self": { "href":"http://example.com/foo" }
+    ,"cousin": { "href": "http://example.com/foo-{distance}-cousin}"
+                 ,"templated": true }
+  }
+  ,"_embedded": {
+    "spouse": { "_links": { "self": { "href": "http://example.com/foo-spouse"}}}
+    ,"sibling": [{ "_links": { "self": { "href": "http://example.com/foo-brother"}}}
+                 ,{ "_links": { "self": { "href": "http://example.com/foo-sister"}}}]
+  }
+}
+  HAL
+
+  let(:bar_repr) { HalClient::Representation.new a_client, Halibut::Adapter::JSON.parse(bar_hal) }
+  let(:bar_hal) { <<-HAL }
+{ "_links":{
+    "self": { "href":"http://example.com/bar" }
+    ,"cousin": [{ "href": "http://example.com/foo-maternal-{distance}-cousin"
+                  ,"templated": true }
+                ,{ "href": "http://example.com/foo-mpaternal-{distance}-cousin"
+                  ,"templated": true }]
+  }
+  ,"_embedded": {
+    "spouse": { "_links": { "self": { "href": "http://example.com/bar-spouse"}}}
+    ,"sibling": { "_links": { "self": { "href": "http://example.com/bar-brother"}}}
+  }
+}
+  HAL
+
+  RSpec::Matchers.define(:include_representation_of) do |url|
+    match { |repr_set|
+      repr_set.any?{|it| it.href == url}
+    }
+    failure_message_for_should { |repr_set|
+      "Expected representation of <#{url}> but found only #{repr_set.map(&:href)}"
+    }
+  end
+
+end

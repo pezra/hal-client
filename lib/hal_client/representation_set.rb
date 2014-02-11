@@ -9,7 +9,7 @@ class HalClient
       @reprs = reprs
     end
 
-    def_delegators :reprs, :each, :count, :empty?
+    def_delegators :reprs, :each, :count, :empty?, :any?
 
     def related(link_rel)
       RepresentationSet.new flat_map{|it| it.related(link_rel).to_a }

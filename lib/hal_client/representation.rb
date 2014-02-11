@@ -1,6 +1,9 @@
 require 'forwardable'
 require 'addressable/template'
 
+require 'hal_client'
+require 'hal_client/representation_set'
+
 class HalClient
   class Representation
     extend Forwardable
