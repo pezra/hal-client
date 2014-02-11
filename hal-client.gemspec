@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Peter Williams"]
   spec.email         = ["pezra@barelyenough.org"]
   spec.summary       = %q{Use HAL APIs easily}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/pezra/hal-client"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
