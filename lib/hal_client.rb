@@ -1,6 +1,4 @@
 require "hal_client/version"
-require 'halibut'
-require 'halibut/adapter/json'
 require 'rest-client'
 
 # Adapter used to access resources.
@@ -14,7 +12,7 @@ class HalClient
 
   def get(url, options={})
     resp = RestClient.get url, rest_client_options(options)
-    Representation.new self, Halibut::Adapter::JSON.parse(resp)
+    Representation.new self, MultiJson.load(resp)
   end
 
   protected

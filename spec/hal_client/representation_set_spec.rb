@@ -48,7 +48,7 @@ describe HalClient::RepresentationSet do
       it { should have(3).items }
     end
     context "templated" do
-      subject(:returned_val) {pending; repr_set.related("cousin", distance: "first") }
+      subject(:returned_val) { repr_set.related("cousin", distance: "first") }
       it { should include_representation_of "http://example.com/foo-first-cousin" }
       it { should include_representation_of "http://example.com/bar-paternal-first-cousin" }
       it { should include_representation_of "http://example.com/bar-maternal-first-cousin" }
@@ -58,11 +58,11 @@ describe HalClient::RepresentationSet do
 
   let(:a_client) { HalClient.new }
 
-  let(:foo_repr) { HalClient::Representation.new a_client, Halibut::Adapter::JSON.parse(foo_hal)}
+  let(:foo_repr) { HalClient::Representation.new a_client, MultiJson.load(foo_hal)}
   let(:foo_hal) { <<-HAL }
 { "_links":{
     "self": { "href":"http://example.com/foo" }
-    ,"cousin": { "href": "http://example.com/foo-{distance}-cousin}"
+    ,"cousin": { "href": "http://example.com/foo-{distance}-cousin"
                  ,"templated": true }
   }
   ,"_embedded": {
@@ -73,13 +73,13 @@ describe HalClient::RepresentationSet do
 }
   HAL
 
-  let(:bar_repr) { HalClient::Representation.new a_client, Halibut::Adapter::JSON.parse(bar_hal) }
+  let(:bar_repr) { HalClient::Representation.new a_client, MultiJson.load(bar_hal) }
   let(:bar_hal) { <<-HAL }
 { "_links":{
     "self": { "href":"http://example.com/bar" }
-    ,"cousin": [{ "href": "http://example.com/foo-maternal-{distance}-cousin"
+    ,"cousin": [{ "href": "http://example.com/bar-maternal-{distance}-cousin"
                   ,"templated": true }
-                ,{ "href": "http://example.com/foo-mpaternal-{distance}-cousin"
+                ,{ "href": "http://example.com/bar-paternal-{distance}-cousin"
                   ,"templated": true }]
   }
   ,"_embedded": {
@@ -88,6 +88,19 @@ describe HalClient::RepresentationSet do
   }
 }
   HAL
+
+  let!(:foo_cousin_request) {
+    stub_identity_request "http://example.com/foo-first-cousin" }
+  let!(:bar_maternal_cousin_request) {
+    stub_identity_request "http://example.com/bar-maternal-first-cousin" }
+  let!(:bar_paternal_cousin_request) {
+    stub_identity_request "http://example.com/bar-paternal-first-cousin" }
+
+  def stub_identity_request(url)
+    stub_request(:get, url).
+      to_return body: %Q|{"_links":{"self":{"href":#{url.to_json}}}}|
+  end
+
 
   RSpec::Matchers.define(:include_representation_of) do |url|
     match { |repr_set|
