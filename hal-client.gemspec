@@ -9,6 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Peter Williams"]
   spec.email         = ["pezra@barelyenough.org"]
   spec.summary       = %q{Use HAL APIs easily}
+  spec.description   = %q{An easy to use interface for REST APIs that use HAL.}
   spec.homepage      = "https://github.com/pezra/hal-client"
   spec.license       = "MIT"
 
@@ -17,12 +18,12 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rest-client", "~> 1.6.0"
-  spec.add_dependency "addressable", "~> 2.3.0"
-  spec.add_dependency "multi_json", "~> 1.8.0"
+  spec.add_dependency "rest-client", "~> 1.6", '>= 1.6.0'
+  spec.add_dependency "addressable", "~> 2.3", '>= 2.3.0'
+  spec.add_dependency "multi_json", "~> 1.8", '>= 1.8.0'
 
   spec.add_development_dependency "bundler", "~> 1.5"
-  spec.add_development_dependency "rake", "~> 10.1.0"
-  spec.add_development_dependency "rspec", "~> 2.14.0"
-  spec.add_development_dependency "webmock", "~> 1.16.0"
+  spec.add_development_dependency "rake", "~> 10.1", '>= 10.1.0'
+  spec.add_development_dependency "rspec", "~> 2.14", '>= 2.14.0'
+  spec.add_development_dependency "webmock", "~> 1.16", '>= 1.16.0'
 end
