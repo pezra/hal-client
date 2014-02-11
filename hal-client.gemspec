@@ -17,12 +17,12 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rest-client"
-  spec.add_dependency "addressable"
-  spec.add_dependency "multi_json"
+  spec.add_dependency "rest-client", "~> 1.6.0"
+  spec.add_dependency "addressable", "~> 2.3.0"
+  spec.add_dependency "multi_json", "~> 1.8.0"
 
   spec.add_development_dependency "bundler", "~> 1.5"
-  spec.add_development_dependency "rake"
-  spec.add_development_dependency "rspec"
-  spec.add_development_dependency "webmock"
+  spec.add_development_dependency "rake", "~> 10.1.0"
+  spec.add_development_dependency "rspec", "~> 2.14.0"
+  spec.add_development_dependency "webmock", "~> 1.16.0"
 end
