@@ -1,3 +1,5 @@
+[![Code Climate](https://codeclimate.com/github/pezra/hal-client.png)](https://codeclimate.com/github/pezra/hal-client)
+
 # HalClient
 
 An easy to use interface for REST APIs that use [HAL](http://stateless.co/hal_specification.html).
