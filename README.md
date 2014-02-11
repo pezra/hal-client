@@ -1,6 +1,6 @@
 # HalClient
 
-Provides an easy to use interface for interacting with REST APIs that use [HAL](http://stateless.co/hal_specification.html).
+An easy to use interface for REST APIs that use [HAL](http://stateless.co/hal_specification.html).
 
 ## Installation
 
