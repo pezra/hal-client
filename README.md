@@ -31,7 +31,7 @@ If the API uses one or more a custom mime types we can specify that they be incl
 
 ### `GET`ting an entry point
 
-In normal usage you will rarely use the `HalClient` instance directly. Normally, you will traverse links on a representation which uses the `HalClient` indirectly. Getting API entry points is main use for the HalClient instance.
+Getting API entry points is main use for the HalClient instance. Once you have an entry point we will simply traverse the links on a representation (which uses the client instance indirectly).
 
     blog = my_client.get("http://blog.me/")
 
