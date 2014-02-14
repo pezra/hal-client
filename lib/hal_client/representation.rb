@@ -131,6 +131,12 @@ class HalClient
       end
     end
 
+    # Returns a short human readable description of this
+    # representation.
+    def to_s
+      "#<" + self.class.name + ": " + href + ">"
+    end
+
     protected
     attr_reader :raw, :hal_client
 
