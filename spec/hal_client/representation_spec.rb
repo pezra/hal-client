@@ -31,6 +31,12 @@ describe HalClient::Representation do
 HAL
   subject(:repr) { described_class.new(a_client, MultiJson.load(raw_repr)) }
 
+  describe "#to_s" do
+    subject(:return_val) { repr.to_s }
+
+    it { should eq "#<HalClient::Representation: http://example.com/foo>" }
+  end
+
   describe "#property" do
     context "existent" do
       subject { repr.property "prop1" }
