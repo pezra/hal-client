@@ -19,21 +19,12 @@ Or install it yourself as:
 
     $ gem install hal-client
 
-## Usage
+Usage
+-----
 
-The first step to using HalClient is to create a `HalClient` instance.
+The first step in using a HAL based API is getting a representation of one of its entry point. The simplest way to do this is using the `get` class method of `HalClient`.
 
-    my_client = HalClient.new
-
-If the API uses one or more a custom mime types we can specify that they be included in the `Accept` header field of each request.
-
-    my_client = HalClient.new(accept: "application/vnd.myapp+hal+json")
-
-### `GET`ting an entry point
-
-Getting API entry points is main use for the HalClient instance. Once you have an entry point we will simply traverse the links on a representation (which uses the client instance indirectly).
-
-    blog = my_client.get("http://blog.me/")
+    blog = HalClient.get("http://blog.me/")
     # => #<Representation: http://blog.me/>
 
 `HalClient::Representation`s expose a `#property` method to retrieve properties from the HAL document.
@@ -43,14 +34,14 @@ Getting API entry points is main use for the HalClient instance. Once you have a
 
 ### Link navigation
 
-Once we have a representation we are going to need to navigate its links. This can be accomplished by using the `#related` method.
+Once we have a representation we will want to navigate its links. This can be accomplished using the `#related` method.
 
     articles = blog.related("item")
     # => #<RepresentationSet:...>
 
-In the example above `item` is the link rel. The `#related` method looks up both embedded representations and links with the rel of `item`. Links are then dereferenced using the same `HalClient` instance used to retrieve the entry point. The dereferenced links and extracted embedded representations are converted into individual `HalClient::Representation`s and packaged into a `HalClient::RepresentationSet`. `HalClient` always returns `RepresentationSet`s when following links, even when there is only one result as doing so tends to result in simpler client code.
+In the example above `item` is the link rel. The `#related` method extracts embedded representations and dereferences links with the specified rel. The resulting representations and packaged into a `HalClient::RepresentationSet`. `HalClient` always returns `RepresentationSet`s when following links, even when there is only one result as doing so tends to result in simpler client code.
 
-`RepresentationSet`s are `Enumerable` so they expose all your favorite methods like `#each`, `#map`, `#any?`, etc. Additionally, `RepresentationSet`s expose a `#related` method which calls `#related` on each member of the set and then merges the results into a new representation set.
+`RepresentationSet`s are `Enumerable` so they expose all your favorite methods like `#each`, `#map`, `#any?`, etc. `RepresentationSet`s expose a `#related` method which calls `#related` on each member of the set and then merges the results into a new representation set.
 
     authors = blog.related("author").related("item")
     authors.first.property("name")
@@ -95,11 +86,20 @@ All `HalClient::Representation`s exposed an `#href` attribute which is its ident
     blog['title'] # => "Some Person's Blog"
     blog['item']  # =>  #<RepresentationSet:...>
 
+### Custom media types
+
+If the API uses one or more a custom mime types we can specify that they be included in the `Accept` header field of each request.
+
+    my_client = HalClient.new(accept: "application/vnd.myapp+hal+json")
+    my_client.get("http://blog.me/")
+    # => #<Representation: http://blog.me/>
+
 ## Contributing
 
 1. Fork it ( http://github.com/pezra/hal-client/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-3. Update `lib/hal_client/version.rb` following [semantic versioning rules](http://semver.org/)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+3. Implement your improvement
+4. Update `lib/hal_client/version.rb` following [semantic versioning rules](http://semver.org/)
+5. Commit your changes (`git commit -am 'Add some feature'`)
+6. Push to the branch (`git push origin my-new-feature`)
+7. Create new Pull Request
