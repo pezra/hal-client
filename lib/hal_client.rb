@@ -5,6 +5,7 @@ require 'rest-client'
 class HalClient
   autoload :Representation, 'hal_client/representation'
   autoload :RepresentationSet, 'hal_client/representation_set'
+  autoload :CurieResolver, 'hal_client/curie_resolver'
 
   # Initializes a new client instance
   #

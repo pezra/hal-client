@@ -148,6 +148,61 @@ HAL
   end
 
 
+  context "curie links" do
+    let(:raw_repr) { <<-HAL }
+{ "_links": {
+    "self": { "href": "http://example.com/foo" }
+    ,"ex:bar": { "href": "http://example.com/bar" }
+    ,"curies": [{"name": "ex", "href": "http://example.com/rels/{rel}", "templated": true}]
+  }
+}
+HAL
+
+    describe "#related return value " do
+      subject(:return_val) { repr.related("http://example.com/rels/bar") }
+      it { should include_representation_of "http://example.com/bar" }
+    end
+
+    describe "#[] return value " do
+      subject(:return_val) { repr["http://example.com/rels/bar"] }
+      it { should include_representation_of "http://example.com/bar" }
+    end
+
+    describe "#related_hrefs return value " do
+      subject(:return_val) { repr.related_hrefs("http://example.com/rels/bar") }
+      it { should include "http://example.com/bar" }
+    end
+  end
+
+  context "curie embedded" do
+    let(:raw_repr) { <<-HAL }
+{ "_links": {
+    "self": { "href": "http://example.com/foo" }
+    ,"curies": {"name": "ex", "href": "http://example.com/rels/{rel}", "templated": true}
+  }
+  ,"_embedded": {
+    "ex:embed1": { "_links": { "self": { "href": "http://example.com/embed1" } } }
+  }
+}
+HAL
+
+    describe "#related return value " do
+      subject(:return_val) { repr.related("http://example.com/rels/embed1") }
+      it { should include_representation_of "http://example.com/embed1" }
+    end
+
+    describe "#[] return value " do
+      subject(:return_val) { repr["http://example.com/rels/embed1"] }
+      it { should include_representation_of "http://example.com/embed1" }
+    end
+
+    describe "#related_hrefs return value " do
+      subject(:return_val) { repr.related_hrefs("http://example.com/rels/embed1") }
+      it { should include "http://example.com/embed1" }
+    end
+  end
+
+
 
   let(:a_client) { HalClient.new }
   let!(:bar_request) { stub_identity_request("http://example.com/bar") }
