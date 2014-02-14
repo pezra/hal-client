@@ -137,11 +137,11 @@ class HalClient
     MISSING = Object.new
 
     def link_section
-      @link_section ||= raw.fetch("_links", {})
+      @link_section ||= fully_qualified raw.fetch("_links", {})
     end
 
     def embedded_section
-      @embedded_section ||= raw.fetch("_embedded", {})
+      @embedded_section ||= fully_qualified raw.fetch("_embedded", {})
     end
 
     def embedded(link_rel)
@@ -176,6 +176,18 @@ class HalClient
         raw_href
       end
     end
+
+    def fully_qualified(relations_section)
+      Hash[relations_section.map {|rel, link_info|
+        [(namespaces.resolve rel), link_info]
+      }]
+    end
+
+    def namespaces
+      @namespaces ||= CurieResolver.new raw.fetch("_links", {}).fetch("curies", [])
+    end
+
+
 
   end
 end

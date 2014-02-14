@@ -3,7 +3,7 @@
 
 # HalClient
 
-An easy to use interface for REST APIs that use [HAL](http://stateless.co/hal_specification.html).
+An easy to use client interface for REST APIs that use [HAL](http://stateless.co/hal_specification.html).
 
 ## Installation
 
@@ -34,6 +34,7 @@ If the API uses one or more a custom mime types we can specify that they be incl
 Getting API entry points is main use for the HalClient instance. Once you have an entry point we will simply traverse the links on a representation (which uses the client instance indirectly).
 
     blog = my_client.get("http://blog.me/")
+    # => #<Representation: http://blog.me/>
 
 `HalClient::Representation`s expose a `#property` method to retrieve properties from the HAL document.
 
@@ -54,6 +55,23 @@ In the example above `item` is the link rel. The `#related` method looks up both
     authors = blog.related("author").related("item")
     authors.first.property("name")
     # => "Bob Smith"
+
+#### CURIEs
+
+Links specified using a compact URI (or CURIE) as the rel are fully supported. They are accessed using the fully expanded version of the curie. For example, given a representations of an author:
+
+    { "name": "Bob Smith,
+      "_links": {
+        "so:homeLocation": { "href": "http://example.com/denver" },
+        "curies": [{ "name": "so", "href": "http://schema.org/{rel}", "templated": true }]
+    }}
+
+Bob's home location can be retrieved with
+
+    author.related("http://schema.org/homeLocation")
+    # => #<Representation: http://example.com/denver>
+
+Links are always accessed using the full link relation, rather than the CURIE, because the document producer can use any arbitrary string as the prefix. This means that clients must not make any assumptions regarding what prefix will be used because it might change over time or even between documents.
 
 ### Templated links
 
@@ -76,7 +94,6 @@ All `HalClient::Representation`s exposed an `#href` attribute which is its ident
 
     blog['title'] # => "Some Person's Blog"
     blog['item']  # =>  #<RepresentationSet:...>
-    
 
 ## Contributing
 
