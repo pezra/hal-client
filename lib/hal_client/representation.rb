@@ -92,10 +92,10 @@ class HalClient
         raise KeyError, "No resources are related via `#{link_rel}`"
       }
 
-      embedded = embedded(link_rel) rescue nil
-      linked = linked(link_rel, options) rescue nil
+      embedded = embedded(link_rel)
+      linked = linked(link_rel, options)
 
-      if !embedded.nil? or !linked.nil?
+      if embedded or linked
         RepresentationSet.new (Array(embedded) + Array(linked))
       else
         default_proc.call link_rel
@@ -119,12 +119,12 @@ class HalClient
         raise KeyError, "No resources are related via `#{link_rel}`"
       }
 
-      embedded = boxed embedded_section.fetch(link_rel, nil)
-      linked = boxed link_section.fetch(link_rel, nil)
+      embedded = embedded_section.fetch(link_rel, nil)
+      linked = link_section.fetch(link_rel, nil)
 
-      if !embedded.nil? or !linked.nil?
-        Array(embedded).map{|it| it.fetch("_links").fetch("self").fetch("href") rescue nil} +
-          Array(linked).map{|it| it.fetch("href", nil) }.
+      if embedded or linked
+        (boxed embedded).map{|an_embed| href_of an_embed } +
+          (boxed linked).map{|it| it.fetch("href", nil) }.
           compact
       else
         default_proc.call link_rel
@@ -150,10 +150,17 @@ class HalClient
       @embedded_section ||= fully_qualified raw.fetch("_embedded", {})
     end
 
+    def href_of(embedded_repr)
+      embedded_repr.fetch("_links", {}).fetch("self", {}).fetch("href", nil)
+    end
+
     def embedded(link_rel)
       relations = boxed embedded_section.fetch(link_rel)
 
       relations.map{|it| Representation.new hal_client, it}
+
+    rescue KeyError
+      nil
     end
 
     def linked(link_rel, options)
@@ -162,6 +169,9 @@ class HalClient
       relations.
         map {|link| href_from link, options }.
         map {|href| hal_client.get href }
+
+    rescue KeyError
+      nil
     end
 
 
@@ -169,7 +179,7 @@ class HalClient
       if Hash === list_hash_or_nil
         [list_hash_or_nil]
       else
-        list_hash_or_nil
+        Array list_hash_or_nil
       end
     end
 
