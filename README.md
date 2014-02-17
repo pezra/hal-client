@@ -39,12 +39,10 @@ Once we have a representation we will want to navigate its links. This can be ac
     articles = blog.related("item")
     # => #<RepresentationSet:...>
 
-In the example above `item` is the link rel. The `#related` method extracts embedded representations and dereferences links with the specified rel. The resulting representations and packaged into a `HalClient::RepresentationSet`. `HalClient` always returns `RepresentationSet`s when following links, even when there is only one result as doing so tends to result in simpler client code.
+In the example above `item` is the link rel. The `#related` method extracts embedded representations and dereferences links with the specified rel. The resulting representations are packaged into a `HalClient::RepresentationSet`. `HalClient` always returns `RepresentationSet`s when following links, even when there is only one result. `RepresentationSet`s are `Enumerable` so they expose all your favorite methods like `#each`, `#map`, `#any?`, etc. `RepresentationSet`s expose a `#related` method which calls `#related` on each member of the set and then merges the results into a new representation set.
 
-`RepresentationSet`s are `Enumerable` so they expose all your favorite methods like `#each`, `#map`, `#any?`, etc. `RepresentationSet`s expose a `#related` method which calls `#related` on each member of the set and then merges the results into a new representation set.
-
-    authors = blog.related("author").related("item")
-    authors.first.property("name")
+    all_the_authors = blog.related("author").related("item")
+    all_the_authors.first.property("name")
     # => "Bob Smith"
 
 #### CURIEs
