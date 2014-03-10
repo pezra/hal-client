@@ -3,12 +3,11 @@ require_relative "../spec_helper"
 require "hal_client/representation"
 
 describe HalClient::Representation do
-  describe ".new" do
+  describe ".new(a_hal_client, a_parsed_json_doc)" do
     let!(:return_val) { described_class.new(a_client, MultiJson.load(raw_repr)) }
     describe "return_val" do
       subject { return_val }
       it { should be_kind_of described_class }
-
     end
   end
 
@@ -230,4 +229,28 @@ HAL
       "Expected representation of <#{url}> but found only #{repr_set.map(&:href)}"
     }
   end
+end
+
+describe HalClient::Representation, "w/o hal_client" do
+  subject(:repr) { described_class.new(MultiJson.load(raw_repr)) }
+
+  specify { expect(subject.href).to eq "http://example.com/foo" }
+  specify { expect(subject.related_hrefs "link1").to include "http://example.com/bar" }
+  specify { expect(subject.related("link1").first.href).to eq "http://example.com/bar" }
+  specify { expect(subject.related("embed1").first.href).to eq "http://example.com/baz" }
+
+
+  let(:raw_repr) { <<-HAL }
+{ "prop1": 1
+  ,"_links": {
+    "self": { "href": "http://example.com/foo" }
+    ,"link1": { "href": "http://example.com/bar" }
+  }
+  ,"_embedded": {
+    "embed1": {
+      "_links": { "self": { "href": "http://example.com/baz" }}
+    }
+  }
+}
+  HAL
 end
