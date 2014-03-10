@@ -39,11 +39,15 @@ Once we have a representation we will want to navigate its links. This can be ac
     articles = blog.related("item")
     # => #<RepresentationSet:...>
 
-In the example above `item` is the link rel. The `#related` method extracts embedded representations and dereferences links with the specified rel. The resulting representations are packaged into a `HalClient::RepresentationSet`. `HalClient` always returns `RepresentationSet`s when following links, even when there is only one result. `RepresentationSet`s are `Enumerable` so they expose all your favorite methods like `#each`, `#map`, `#any?`, etc. `RepresentationSet`s expose a `#related` method which calls `#related` on each member of the set and then merges the results into a new representation set.
+In the example above `item` is the link rel. The `#related` method extracts embedded representations and link hrefs with the specified rel. The resulting representations are packaged into a `HalClient::RepresentationSet`. `HalClient` always returns `RepresentationSet`s when following links, even when there is only one result. `RepresentationSet`s are `Enumerable` so they expose all your favorite methods like `#each`, `#map`, `#any?`, etc. `RepresentationSet`s expose a `#related` method which calls `#related` on each member of the set and then merges the results into a new representation set.
 
     all_the_authors = blog.related("author").related("item")
     all_the_authors.first.property("name")
     # => "Bob Smith"
+
+#### Request timing
+
+If the `author` relationship was a link in the above example the HTTP GET to retrieve Bob's representation from the server does not happen until the `#property` method is called. This lazy dereferencing allows for working with efficiently with larger relationship sets.
 
 #### CURIEs
 
@@ -91,6 +95,16 @@ If the API uses one or more a custom mime types we can specify that they be incl
     my_client = HalClient.new(accept: "application/vnd.myapp+hal+json")
     my_client.get("http://blog.me/")
     # => #<Representation: http://blog.me/>
+
+### Parsing presentations from clients
+
+HalClient can be used by servers of HAL APIs to interpret the bodies of requests. For example,
+
+    new_post_repr = HalClient::Representation.new(JSON.load(request.raw_post))
+    author = Author.by_href(new_post_repr.related('author').first.href)
+    new_post = Post.new title: new_post_repr['title'], author: author, #...
+
+Created this way the representation will not dereference any links (because it doesn't have a HalClient) but it will provide `HalClient::Representation`s of both embedded and linked resources.
 
 ## Contributing
 

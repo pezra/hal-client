@@ -13,12 +13,48 @@ class HalClient
 
     # Create a new Representation
     #
-    # hal_client - The HalClient instance to use when navigating.
     # parsed_json - A hash structure representing a single HAL
     #   document.
-    def initialize(hal_client, parsed_json)
-      @hal_client = hal_client
-      @raw = parsed_json
+    # href - The href of this representation.
+    # hal_client - The HalClient instance to use when navigating.
+    #
+    # Signature
+    #
+    #     initialize(hal_client, parsed_json)
+    #     initialize(parsed_json, hal_client)
+    #
+    # Initialize this representation with a parsed json document and a
+    # hal_client with which to make requests.
+    #
+    #     initialize(href, hal_client)
+    #
+    # Initialize this representation with an href and a hal_client
+    # with which to make requests. Any attempt to retrieve properties
+    # or related representations will result in the href being
+    # dereferenced.
+    #
+    #     initialize(href)
+    #
+    # Initialize this representation with an href. The representation
+    # will not be able to make requests to dereference itself but this
+    # can still be useful in test situations to maintain a uniform
+    # interface.
+    #
+    #     initialize(parse_json)
+    #
+    # Initializes representation that cannot request related
+    # representations.
+    #
+    def initialize(*args)
+      (raise ArgumentError, "wrong number of arguments (#{args.size} for 1 or 2)") if
+        args.size > 2
+
+      @raw = args.find {|it| (it.respond_to? :has_key?) &&  (it.respond_to? :fetch) }
+      @hal_client = args.find {|it| HalClient === it }
+
+      if @raw.nil?
+        @href = args.find {|it| it.respond_to? :downcase }
+      end
     end
 
     # Returns The value of the specified property or the specified
@@ -41,7 +77,7 @@ class HalClient
 
     # Returns the URL of the resource this representation represents.
     def href
-      link_section.fetch("self").fetch("href")
+      @href ||= link_section.fetch("self").fetch("href")
     end
 
     # Returns the value of the specified property or representations
@@ -92,8 +128,8 @@ class HalClient
         raise KeyError, "No resources are related via `#{link_rel}`"
       }
 
-      embedded = embedded(link_rel) rescue nil
-      linked = linked(link_rel, options) rescue nil
+      embedded = embedded_or_nil(link_rel)
+      linked = linked_or_nil(link_rel, options)
 
       if !embedded.nil? or !linked.nil?
         RepresentationSet.new (Array(embedded) + Array(linked))
@@ -115,20 +151,8 @@ class HalClient
     # Raises KeyError if the specified link does not exist
     #   and no default_proc is provided.
     def related_hrefs(link_rel, options={}, &default_proc)
-      default_proc ||= ->(link_rel){
-        raise KeyError, "No resources are related via `#{link_rel}`"
-      }
-
-      embedded = boxed embedded_section.fetch(link_rel, nil)
-      linked = boxed link_section.fetch(link_rel, nil)
-
-      if !embedded.nil? or !linked.nil?
-        Array(embedded).map{|it| it.fetch("_links").fetch("self").fetch("href") rescue nil} +
-          Array(linked).map{|it| it.fetch("href", nil) }.
-          compact
-      else
-        default_proc.call link_rel
-      end
+      related(link_rel, options, &default_proc).
+        map(&:href)
     end
 
     # Returns a short human readable description of this
@@ -138,9 +162,13 @@ class HalClient
     end
 
     protected
-    attr_reader :raw, :hal_client
+    attr_reader :hal_client
 
     MISSING = Object.new
+
+    def raw
+      @raw ||= hal_client.get(href)
+    end
 
     def link_section
       @link_section ||= fully_qualified raw.fetch("_links", {})
@@ -156,12 +184,26 @@ class HalClient
       relations.map{|it| Representation.new hal_client, it}
     end
 
+    def embedded_or_nil(link_rel)
+      embedded link_rel
+
+    rescue KeyError
+      nil
+    end
+
     def linked(link_rel, options)
       relations = boxed link_section.fetch(link_rel)
 
       relations.
         map {|link| href_from link, options }.
-        map {|href| hal_client.get href }
+        map {|href| Representation.new href, hal_client }
+    end
+
+    def linked_or_nil(link_rel, options)
+      linked link_rel, options
+
+    rescue KeyError
+      nil
     end
 
 
