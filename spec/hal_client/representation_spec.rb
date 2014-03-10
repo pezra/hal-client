@@ -152,6 +152,11 @@ HAL
     end
   end
 
+  specify { expect(subject.has_related? "link1").to be true }
+  specify { expect(subject.has_related? "embed1").to be true }
+
+  specify { expect(subject.has_related? "no-such-link").to be false }
+  specify { expect(subject.has_related? "no-such-embed").to be false }
 
   context "curie links" do
     let(:raw_repr) { <<-HAL }
@@ -206,6 +211,7 @@ HAL
       it { should include "http://example.com/embed1" }
     end
   end
+
 
 
 

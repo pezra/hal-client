@@ -111,10 +111,21 @@ class HalClient
       fetch(item_key, nil)
     end
 
+    # Returns true if this representation contains a link (including
+    # embedded links) whose rel is `link_rel`.
+    #
+    # link_rel - The link rel of interest
+    def has_related?(link_rel)
+      _ = related link_rel
+      true
+    rescue KeyError
+      false
+    end
+
     # Returns representations of resources related via the specified
     #   link rel or the specified default value.
     #
-    # name_or_rel - The name of property or link rel of interest
+    # link_rel - The link rel of interest
     # options - optional keys and values with which to expand any
     #   templated links that are encountered
     # default_proc - an option proc that will be called with `name`
@@ -141,7 +152,7 @@ class HalClient
     # Returns urls of resources related via the specified
     #   link rel or the specified default value.
     #
-    # name_or_rel - The name of property or link rel of interest
+    # link_rel - The link rel of interest
     # options - optional keys and values with which to expand any
     #   templated links that are encountered
     # default_proc - an option proc that will be called with `name`
