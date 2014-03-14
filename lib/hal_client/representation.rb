@@ -17,44 +17,16 @@ class HalClient
     #   document.
     # href - The href of this representation.
     # hal_client - The HalClient instance to use when navigating.
-    #
-    # Signature
-    #
-    #     initialize(hal_client, parsed_json)
-    #     initialize(parsed_json, hal_client)
-    #
-    # Initialize this representation with a parsed json document and a
-    # hal_client with which to make requests.
-    #
-    #     initialize(href, hal_client)
-    #
-    # Initialize this representation with an href and a hal_client
-    # with which to make requests. Any attempt to retrieve properties
-    # or related representations will result in the href being
-    # dereferenced.
-    #
-    #     initialize(href)
-    #
-    # Initialize this representation with an href. The representation
-    # will not be able to make requests to dereference itself but this
-    # can still be useful in test situations to maintain a uniform
-    # interface.
-    #
-    #     initialize(parse_json)
-    #
-    # Initializes representation that cannot request related
-    # representations.
-    #
-    def initialize(*args)
-      (raise ArgumentError, "wrong number of arguments (#{args.size} for 1 or 2)") if
-        args.size > 2
+    def initialize(parsed_json: nil, hal_client: nil, href: nil)
+      @raw = parsed_json
+      @hal_client = hal_client
+      @href = href
 
-      @raw = args.find {|it| (it.respond_to? :has_key?) &&  (it.respond_to? :fetch) }
-      @hal_client = args.find {|it| HalClient === it }
+      (fail ArgumentError, "Either parsed_json or href must be provided") if
+        @raw.nil? && href.nil?
 
-      if @raw.nil?
-        @href = args.find {|it| it.respond_to? :downcase }
-      end
+      (fail InvalidRepresentationError, "Invalid HAL representation: #{raw.inspect}") if
+        raw && ! hashish?(raw)
     end
 
     # Returns The value of the specified property or the specified
@@ -118,6 +90,7 @@ class HalClient
     def has_related?(link_rel)
       _ = related link_rel
       true
+
     rescue KeyError
       false
     end
@@ -178,7 +151,11 @@ class HalClient
     MISSING = Object.new
 
     def raw
-      @raw ||= hal_client.get(href)
+      if @raw.nil? && @href && hal_client
+        @raw ||= hal_client.get(@href).raw
+      end
+
+      @raw
     end
 
     def link_section
@@ -192,8 +169,11 @@ class HalClient
     def embedded(link_rel)
       relations = boxed embedded_section.fetch(link_rel)
 
-      relations.map{|it| Representation.new hal_client, it}
-    end
+      relations.map{|it| Representation.new hal_client: hal_client, parsed_json: it}
+
+    rescue InvalidRepresentationError => err
+      fail InvalidRepresentationError, "/_embedded/#{jpointer_esc(link_rel)} is not a valid representation"
+end
 
     def embedded_or_nil(link_rel)
       embedded link_rel
@@ -207,7 +187,14 @@ class HalClient
 
       relations.
         map {|link| href_from link, options }.
-        map {|href| Representation.new href, hal_client }
+        map {|href| Representation.new href: href, hal_client: hal_client }
+
+    rescue InvalidRepresentationError => err
+      fail InvalidRepresentationError, "/_links/#{jpointer_esc(link_rel)} is not a valid link"
+    end
+
+    def jpointer_esc(str)
+      str.gsub "/", "~1"
     end
 
     def linked_or_nil(link_rel, options)
@@ -219,10 +206,15 @@ class HalClient
 
 
     def boxed(list_hash_or_nil)
-      if Hash === list_hash_or_nil
+      if hashish? list_hash_or_nil
         [list_hash_or_nil]
-      else
+      elsif list_hash_or_nil.respond_to? :map
         list_hash_or_nil
+      else
+        # The only valid values for a link/embedded set are hashes or
+        # array-ish things.
+
+        fail InvalidRepresentationError
       end
     end
 
@@ -246,7 +238,9 @@ class HalClient
       @namespaces ||= CurieResolver.new raw.fetch("_links", {}).fetch("curies", [])
     end
 
-
+    def hashish?(thing)
+      thing.respond_to?(:fetch) && thing.respond_to?(:key?)
+    end
 
   end
 end

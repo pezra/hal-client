@@ -58,7 +58,7 @@ describe HalClient::RepresentationSet do
 
   let(:a_client) { HalClient.new }
 
-  let(:foo_repr) { HalClient::Representation.new a_client, MultiJson.load(foo_hal)}
+  let(:foo_repr) { HalClient::Representation.new hal_client: a_client, parsed_json: MultiJson.load(foo_hal)}
   let(:foo_hal) { <<-HAL }
 { "_links":{
     "self": { "href":"http://example.com/foo" }
@@ -73,7 +73,7 @@ describe HalClient::RepresentationSet do
 }
   HAL
 
-  let(:bar_repr) { HalClient::Representation.new a_client, MultiJson.load(bar_hal) }
+  let(:bar_repr) { HalClient::Representation.new hal_client: a_client, parsed_json: MultiJson.load(bar_hal) }
   let(:bar_hal) { <<-HAL }
 { "_links":{
     "self": { "href":"http://example.com/bar" }

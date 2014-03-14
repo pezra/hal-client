@@ -3,14 +3,6 @@ require_relative "../spec_helper"
 require "hal_client/representation"
 
 describe HalClient::Representation do
-  describe ".new(a_hal_client, a_parsed_json_doc)" do
-    let!(:return_val) { described_class.new(a_client, MultiJson.load(raw_repr)) }
-    describe "return_val" do
-      subject { return_val }
-      it { should be_kind_of described_class }
-    end
-  end
-
   let(:raw_repr) { <<-HAL }
 { "prop1": 1
   ,"_links": {
@@ -28,7 +20,8 @@ describe HalClient::Representation do
   }
 }
 HAL
-  subject(:repr) { described_class.new(a_client, MultiJson.load(raw_repr)) }
+  subject(:repr) { described_class.new(hal_client: a_client,
+                                       parsed_json: MultiJson.load(raw_repr)) }
 
   describe "#to_s" do
     subject(:return_val) { repr.to_s }
@@ -212,8 +205,28 @@ HAL
     end
   end
 
+  context "invalid link/embedded" do
+    let(:raw_repr) { <<-HAL }
+{ "_links": {
+    "self": { "href": "http://example.com/foo" }
+    ,"bare_url": "http://example.com/bar"
+  }
+  ,"_embedded": {
+    "atom": "hello"
+    ,"array-of-atoms": [1,2,3]
+  }
+}
+HAL
 
+    specify { expect{repr.related("bare_url")}
+        .to raise_error HalClient::InvalidRepresentationError, %r(/_links/bare_url) }
+    specify { expect{repr.related("atom")}
+        .to raise_error HalClient::InvalidRepresentationError, %r(/_embedded/atom) }
+    specify { expect{repr.related("array-of-atoms")}
+        .to raise_error HalClient::InvalidRepresentationError, %r(/_embedded/array-of-atoms) }
 
+  end
+  # Background
 
   let(:a_client) { HalClient.new }
   let!(:bar_request) { stub_identity_request("http://example.com/bar") }
@@ -227,7 +240,7 @@ HAL
       to_return body: %Q|{"_links":{"self":{"href":#{url.to_json}}}}|
   end
 
-  RSpec::Matchers.define(:include_representation_of) do |url|
+  matcher :include_representation_of do |url|
     match { |repr_set|
       repr_set.any?{|it| it.href == url}
     }
@@ -238,7 +251,7 @@ HAL
 end
 
 describe HalClient::Representation, "w/o hal_client" do
-  subject(:repr) { described_class.new(MultiJson.load(raw_repr)) }
+  subject(:repr) { described_class.new(parsed_json: MultiJson.load(raw_repr)) }
 
   specify { expect(subject.href).to eq "http://example.com/foo" }
   specify { expect(subject.related_hrefs "link1").to include "http://example.com/bar" }

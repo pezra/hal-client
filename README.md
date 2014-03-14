@@ -100,11 +100,15 @@ If the API uses one or more a custom mime types we can specify that they be incl
 
 HalClient can be used by servers of HAL APIs to interpret the bodies of requests. For example,
 
-    new_post_repr = HalClient::Representation.new(JSON.load(request.raw_post))
+    new_post_repr = HalClient::Representation.new(parsed_json: JSON.load(request.raw_post))
     author = Author.by_href(new_post_repr.related('author').first.href)
     new_post = Post.new title: new_post_repr['title'], author: author, #...
 
 Created this way the representation will not dereference any links (because it doesn't have a HalClient) but it will provide `HalClient::Representation`s of both embedded and linked resources.
+
+## Upgrading from 1.x to 2.x
+
+The signature of `HalClient::Representation#new` changed such that keyword arguments are required. Any direct uses of that method must be changed. This is the only breaking change.
 
 ## Contributing
 

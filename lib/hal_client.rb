@@ -6,6 +6,7 @@ class HalClient
   autoload :Representation, 'hal_client/representation'
   autoload :RepresentationSet, 'hal_client/representation_set'
   autoload :CurieResolver, 'hal_client/curie_resolver'
+  autoload :InvalidRepresentationError, 'hal_client/errors'
 
   # Initializes a new client instance
   #
@@ -22,7 +23,7 @@ class HalClient
   # options - set of options to pass to `RestClient#get`
   def get(url, options={})
     resp = RestClient.get url, rest_client_options(options)
-    Representation.new self, MultiJson.load(resp)
+    Representation.new hal_client: self, parsed_json: MultiJson.load(resp)
   end
 
   protected
