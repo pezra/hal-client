@@ -13,17 +13,18 @@ class HalClient
 
     # Create a new Representation
     #
-    # parsed_json - A hash structure representing a single HAL
-    #   document.
-    # href - The href of this representation.
-    # hal_client - The HalClient instance to use when navigating.
-    def initialize(parsed_json: nil, hal_client: nil, href: nil)
-      @raw = parsed_json
-      @hal_client = hal_client
-      @href = href
+    # options - name parameters
+    #   :parsed_json - A hash structure representing a single HAL
+    #     document.
+    #   :href - The href of this representation.
+    #   :hal_client - The HalClient instance to use when navigating.
+    def initialize(options)
+      @raw = options[:parsed_json]
+      @hal_client = options[:hal_client]
+      @href = options[:href]
 
       (fail ArgumentError, "Either parsed_json or href must be provided") if
-        @raw.nil? && href.nil?
+        @raw.nil? && @href.nil?
 
       (fail InvalidRepresentationError, "Invalid HAL representation: #{raw.inspect}") if
         raw && ! hashish?(raw)
