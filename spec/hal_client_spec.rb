@@ -82,6 +82,15 @@ describe HalClient do
           to have_been_made
       end
     end
+
+    context "with no response body" do
+      subject { empty_post_request }
+      let!(:return_val) { client.post "http://example.com/foo", nil }
+
+      it "returns a 2xx status code in the response" do
+        expect(return_val.code.to_s).to match(/^2../)
+      end
+    end
   end
 
   describe ".post(<url>)" do
@@ -103,6 +112,10 @@ describe HalClient do
   end
 
   let(:post_data) { "ABC" }
+
+  let!(:empty_post_request) { stub_request(:post, "http://example.com/foo").
+    with(:body => nil).
+    to_return body: nil }
 
   let!(:post_request) { stub_request(:post, "http://example.com/foo").
     with(:body => post_data).
