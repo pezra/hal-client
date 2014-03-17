@@ -27,7 +27,7 @@ class HalClient
       RepresentationSet.new flat_map{|it| it.related(link_rel, options){[]}.to_a }
     end
 
-    # Posts a `Representation` or `String` to the resource.
+    # Post a `Representation` or `String` to the resource.
     #
     # NOTE: This only works for a single representation.
     #

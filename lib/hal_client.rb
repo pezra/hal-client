@@ -29,7 +29,7 @@ class HalClient
     Representation.new hal_client: self, parsed_json: MultiJson.load(resp)
   end
 
-  # POSTs a `Representation` or `String` to the resource identified at `url`.
+  # Post a `Representation` or `String` to the resource identified at `url`.
   #
   # url - The URL of the resource of interest.
   # data - a `String` or an object that responds to `#to_hal`
@@ -49,11 +49,14 @@ class HalClient
   attr_reader :default_accept, :default_content_type
 
   def get_options(overrides)
-    {accept: default_accept}.merge overrides
+    { accept: default_accept }.merge overrides
   end
 
   def post_options(overrides)
-    {content_type: default_content_type}.merge overrides
+    {
+      accept: default_accept,
+      content_type: default_content_type
+    }.merge overrides
   end
 
   module EntryPointCovenienceMethods
@@ -65,7 +68,7 @@ class HalClient
       default_client.get(url, options)
     end
 
-    # POSTs a `Representation` or `String` to the resource identified at `url`.
+    # Post a `Representation` or `String` to the resource identified at `url`.
     #
     # url - The URL of the resource of interest.
     # data - a `String` or an object that responds to `#to_hal`

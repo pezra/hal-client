@@ -69,13 +69,13 @@ describe HalClient do
       subject { post_request }
       it("should have been made") { should have_been_made }
 
-      it "sends accept header" do
+      it "sends content type header" do
         expect(post_request.with(headers: {'Content-Type' => 'application/hal+json'})).
           to have_been_made
       end
     end
 
-    context "explicit accept" do
+    context "explicit content type" do
       subject(:client) { HalClient.new content_type: 'app/test' }
       it "sends specified content-type header" do
         expect(post_request.with(headers: {'Content-Type' => 'app/test'})).

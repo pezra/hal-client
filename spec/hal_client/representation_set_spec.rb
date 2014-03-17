@@ -75,14 +75,6 @@ describe HalClient::RepresentationSet do
           ).to have_been_made
       end
     end
-
-    context "with several representations" do
-      it "raises an error explaining that we only post with singular resources" do
-        expect {
-          repr_set.post("blah")
-        }.to raise_error(NotImplementedError)
-      end
-    end
   end
 
   let(:a_client) { HalClient.new }
