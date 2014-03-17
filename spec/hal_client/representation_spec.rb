@@ -23,6 +23,23 @@ HAL
   subject(:repr) { described_class.new(hal_client: a_client,
                                        parsed_json: MultiJson.load(raw_repr)) }
 
+  describe "#post" do
+    let!(:post_request) {
+      stub_request(:post, "example.com/bar")
+    }
+
+    before(:each) do
+      repr.related("link1").post("abc")
+    end
+
+    specify {
+      expect(
+        post_request.
+        with(:body => "abc", :headers => {'Content-Type' => 'application/hal+json'})
+      ).to have_been_made
+    }
+  end
+
   describe "#to_s" do
     subject(:return_val) { repr.to_s }
 
@@ -34,6 +51,7 @@ HAL
       subject { repr.property "prop1" }
       it { should eq 1 }
     end
+
     context "non-existent" do
       it "raises exception" do
         expect{repr.property 'wat'}.to raise_exception KeyError
@@ -48,6 +66,7 @@ HAL
       subject { repr.fetch "prop1" }
       it { should eq 1 }
     end
+
     context "for existent link" do
       subject { repr.fetch "link1" }
       it { should have(1).item }
@@ -55,6 +74,7 @@ HAL
         expect(subject.first.href).to eq "http://example.com/bar"
       end
     end
+
     context "for existent embedded" do
       subject { repr.fetch "embed1" }
       it { should have(1).item }
@@ -62,15 +82,18 @@ HAL
         expect(subject.first.href).to eq "http://example.com/baz"
       end
     end
+
     context "non-existent item w/o default" do
       it "raises exception" do
         expect{repr.fetch 'wat'}.to raise_exception KeyError
       end
     end
+
     context "non-existent item w/ default value" do
       subject { repr.fetch "wat", "whatevs" }
       it { should eq "whatevs" }
     end
+
     context "non-existent item w/ default value generator" do
       subject { repr.fetch("wat"){|key| key+"gen" } }
       it { should eq "watgen" }
@@ -82,16 +105,19 @@ HAL
       subject { repr["prop1"] }
       it { should eq 1 }
     end
+
     context "for existent link" do
       subject { repr["link1"] }
       it { should have(1).item }
       it { should include_representation_of "http://example.com/bar" }
     end
+
     context "for existent embedded" do
       subject { repr["embed1"] }
       it { should have(1).item }
       it { should include_representation_of "http://example.com/baz" }
     end
+
     context "non-existent item w/o default" do
       subject { repr["wat"] }
       it { should be_nil }
@@ -104,22 +130,26 @@ HAL
       it { should have(1).item }
       it { should include_representation_of "http://example.com/bar" }
     end
+
     context "for existent compound link" do
       subject { repr.related "link3" }
       it { should have(2).item }
       it { should include_representation_of "http://example.com/link3-a" }
       it { should include_representation_of "http://example.com/link3-b" }
     end
+
     context "for existent templated link" do
       subject { repr.related "link2", name: "bob" }
       it { should have(1).item }
       it { should include_representation_of "http://example.com/people?name=bob"  }
     end
+
     context "for existent embedded" do
       subject { repr.related "embed1" }
       it { should have(1).item }
       it { should include_representation_of "http://example.com/baz" }
     end
+
     context "non-existent item w/o default" do
       it "raises exception" do
         expect{repr.related 'wat'}.to raise_exception KeyError
@@ -133,11 +163,13 @@ HAL
       it { should have(1).item }
       it { should include "http://example.com/bar" }
     end
+
     context "for existent embedded" do
       subject { repr.related_hrefs "embed1" }
       it { should have(1).item }
       it { should include "http://example.com/baz" }
     end
+
     context "non-existent item w/o default" do
       it "raises exception" do
         expect{repr.related_hrefs 'wat'}.to raise_exception KeyError

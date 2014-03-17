@@ -28,6 +28,7 @@ describe HalClient::RepresentationSet do
     it "returns true if there are any" do
       expect(subject.any?{|it| it == foo_repr }).to be_true
     end
+
     it "returns false if there aren't any" do
       expect(subject.any?{|it| false }).to be_false
     end
@@ -40,6 +41,7 @@ describe HalClient::RepresentationSet do
       it { should include_representation_of "http://example.com/bar-spouse" }
       it { should have(2).items }
     end
+
     context "multiple targets" do
       subject(:returned_val) { repr_set.related("sibling") }
       it { should include_representation_of "http://example.com/foo-brother" }
@@ -47,12 +49,39 @@ describe HalClient::RepresentationSet do
       it { should include_representation_of "http://example.com/bar-brother" }
       it { should have(3).items }
     end
+
     context "templated" do
       subject(:returned_val) { repr_set.related("cousin", distance: "first") }
       it { should include_representation_of "http://example.com/foo-first-cousin" }
       it { should include_representation_of "http://example.com/bar-paternal-first-cousin" }
       it { should include_representation_of "http://example.com/bar-maternal-first-cousin" }
       it { should have(3).items }
+    end
+  end
+
+  describe "#post" do
+    context "with a single representation" do
+      subject(:repr_single_set) { described_class.new([foo_repr]) }
+      let!(:post_request) { stub_request(:post, "example.com/foo") }
+
+      before(:each) do
+        repr_single_set.post("abc")
+      end
+
+      it "makes an HTTP POST with the data within the representation" do
+        expect(
+          post_request.
+          with(:body => "abc", :headers => {'Content-Type' => 'application/hal+json'})
+          ).to have_been_made
+      end
+    end
+
+    context "with several representations" do
+      it "raises an error explaining that we only post with singular resources" do
+        expect {
+          repr_set.post("blah")
+        }.to raise_error(NotImplementedError)
+      end
     end
   end
 
@@ -100,7 +129,6 @@ describe HalClient::RepresentationSet do
     stub_request(:get, url).
       to_return body: %Q|{"_links":{"self":{"href":#{url.to_json}}}}|
   end
-
 
   RSpec::Matchers.define(:include_representation_of) do |url|
     match { |repr_set|
