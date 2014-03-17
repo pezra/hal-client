@@ -30,6 +30,14 @@ class HalClient
         raw && ! hashish?(raw)
     end
 
+    # Posts a `Representation` or `String` to this resource.
+    #
+    # data - a `String` or an object that responds to `#to_hal`
+    # options - set of options to pass to `HalClient#post`
+    def post(data, options={})
+      @hal_client.post(href, data, options)
+    end
+
     # Returns The value of the specified property or the specified
     #   default value.
     #

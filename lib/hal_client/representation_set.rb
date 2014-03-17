@@ -27,6 +27,17 @@ class HalClient
       RepresentationSet.new flat_map{|it| it.related(link_rel, options){[]}.to_a }
     end
 
+    # Post a `Representation` or `String` to the resource.
+    #
+    # NOTE: This only works for a single representation.
+    #
+    # data - a `String` or an object that responds to `#to_hal`
+    # options - set of options to pass to `HalClient#post`
+    def post(data, options={})
+      raise NotImplementedError, "We only posts to singular resources." if count > 1
+      first.post(data, options)
+    end
+
     protected
 
     attr_reader :reprs
