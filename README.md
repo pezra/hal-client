@@ -5,20 +5,6 @@
 
 An easy to use client interface for REST APIs that use [HAL](http://stateless.co/hal_specification.html).
 
-## Installation
-
-Add this line to your application's Gemfile:
-
-    gem 'hal-client'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install hal-client
-
 Usage
 -----
 
@@ -130,6 +116,20 @@ HalClient can be used by servers of HAL APIs to interpret the bodies of requests
     new_post = Post.new title: new_post_repr['title'], author: author, #...
 
 Created this way the representation will not dereference any links (because it doesn't have a HalClient) but it will provide `HalClient::Representation`s of both embedded and linked resources.
+
+## Installation
+
+Add this line to your application's Gemfile:
+
+    gem 'hal-client'
+
+And then execute:
+
+    $ bundle
+
+Or install it yourself as:
+
+    $ gem install hal-client
 
 ## Upgrading from 1.x to 2.x
 
