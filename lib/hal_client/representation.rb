@@ -1,4 +1,3 @@
-require 'forwardable'
 require 'addressable/template'
 
 require 'hal_client'
@@ -9,7 +8,6 @@ class HalClient
   # HAL representation of a single resource. Provides access to
   # properties, links and embedded representations.
   class Representation
-    extend Forwardable
 
     # Create a new Representation
     #

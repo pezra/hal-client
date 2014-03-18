@@ -1,3 +1,5 @@
+require 'forwardable'
+
 class HalClient
 
   # A collection HAL representations
