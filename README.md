@@ -88,6 +88,15 @@ All `HalClient::Representation`s exposed an `#href` attribute which is its ident
     blog['title'] # => "Some Person's Blog"
     blog['item']  # =>  #<RepresentationSet:...>
 
+### POST requests
+
+HalClient supports POST requests to remote resources via it's `#post` method.
+
+    blog.post(new_article_as_hal_json_str)
+    #=> #<Representation: http://blog.me>
+
+The argument to post may be `String` or any object that responds to `#to_hal`. Additional options may be passed to change the content type of the post, etc.
+
 ### Paged collections
 
 HalClient provides a high level abstraction for paged collections encoded using [standard `item`, `next` and `prev` link relations](http://tools.ietf.org/html/rfc6573).
@@ -106,6 +115,11 @@ If the API uses one or more a custom mime types we can specify that they be incl
     my_client = HalClient.new(accept: "application/vnd.myapp+hal+json")
     my_client.get("http://blog.me/")
     # => #<Representation: http://blog.me/>
+
+Similarly we can set the default `Content-Type` for post requests.
+
+    my_client = HalClient.new(accept: "application/vnd.myapp+hal+json",
+                              content_type: "application/vnd.myapp+hal+json")
 
 ### Parsing representations on the server side
 
