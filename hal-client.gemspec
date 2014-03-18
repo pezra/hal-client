@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rest-client", "~> 1.6", '>= 1.6.0'
   spec.add_dependency "addressable", "~> 2.3", '>= 2.3.0'
-  spec.add_dependency "multi_json", "~> 1.8", '>= 1.8.0'
+  spec.add_dependency "multi_json", "~> 1.9", '>= 1.9.0'
 
   spec.add_development_dependency "bundler", "~> 1.5"
   spec.add_development_dependency "rake", "~> 10.1", '>= 10.1.0'
