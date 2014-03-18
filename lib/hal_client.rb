@@ -1,5 +1,6 @@
 require "hal_client/version"
 require 'rest-client'
+require 'multi_json'
 
 # Adapter used to access resources.
 class HalClient
@@ -7,6 +8,7 @@ class HalClient
   autoload :RepresentationSet, 'hal_client/representation_set'
   autoload :CurieResolver, 'hal_client/curie_resolver'
   autoload :InvalidRepresentationError, 'hal_client/errors'
+  autoload :NotACollectionError, 'hal_client/errors'
 
   # Initializes a new client instance
   #
