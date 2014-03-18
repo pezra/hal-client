@@ -27,6 +27,18 @@ class HalClient
       RepresentationSet.new flat_map{|it| it.related(link_rel, options){[]}.to_a }
     end
 
+    # Returns true if any member representation contains a link
+    # (including embedded links) whose rel is `link_rel`.
+    #
+    # link_rel - The link rel of interest
+    def has_related?(link_rel)
+      _ = related link_rel
+      true
+
+    rescue KeyError
+      false
+    end
+
     # Post a `Representation` or `String` to the resource.
     #
     # NOTE: This only works for a single representation.

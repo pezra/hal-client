@@ -178,6 +178,7 @@ HAL
   end
 
   specify { expect(subject.has_related? "link1").to be true }
+  specify { expect(subject.has_related? "link3").to be true }
   specify { expect(subject.has_related? "embed1").to be true }
 
   specify { expect(subject.has_related? "no-such-link").to be false }

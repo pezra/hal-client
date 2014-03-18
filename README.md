@@ -47,7 +47,7 @@ In the example above `item` is the link rel. The `#related` method extracts embe
 
 #### Request timing
 
-If the `author` relationship was a link in the above example the HTTP GET to retrieve Bob's representation from the server does not happen until the `#property` method is called. This lazy dereferencing allows for working with efficiently with larger relationship sets.
+If the `author` relationship was a regular link (that is, not embedded) in the above example the HTTP GET to retrieve Bob's representation from the server does not happen until the `#property` method is called. This lazy dereferencing allows for working with efficiently with larger relationship sets.
 
 #### CURIEs
 
@@ -66,7 +66,7 @@ Bob's home location can be retrieved with
 
 Links are always accessed using the full link relation, rather than the CURIE, because the document producer can use any arbitrary string as the prefix. This means that clients must not make any assumptions regarding what prefix will be used because it might change over time or even between documents.
 
-### Templated links
+#### Templated links
 
 The `#related` methods takes a `Hash` as its second argument which is used to expand any templated links that are involved in the navigation.
 
@@ -88,6 +88,17 @@ All `HalClient::Representation`s exposed an `#href` attribute which is its ident
     blog['title'] # => "Some Person's Blog"
     blog['item']  # =>  #<RepresentationSet:...>
 
+### Paged collections
+
+HalClient provides a high level abstraction for paged collections encoded using [standard `item`, `next` and `prev` link relations](http://tools.ietf.org/html/rfc6573).
+
+    articles = HalClient::Collection.new(blog)
+    articles.each do |an_article|
+      # do something with each article representation
+    end
+
+If the collection is paged this will navigate to the next page after yielding all the items on the current page. `HalClient::Collection` is `Enumerable` so all your favorite collection methods are available.
+
 ### Custom media types
 
 If the API uses one or more a custom mime types we can specify that they be included in the `Accept` header field of each request.
@@ -96,7 +107,7 @@ If the API uses one or more a custom mime types we can specify that they be incl
     my_client.get("http://blog.me/")
     # => #<Representation: http://blog.me/>
 
-### Parsing presentations from clients
+### Parsing representations on the server side
 
 HalClient can be used by servers of HAL APIs to interpret the bodies of requests. For example,
 

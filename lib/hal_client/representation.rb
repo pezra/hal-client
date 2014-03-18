@@ -27,7 +27,7 @@ class HalClient
         @raw.nil? && @href.nil?
 
       (fail InvalidRepresentationError, "Invalid HAL representation: #{raw.inspect}") if
-        raw && ! hashish?(raw)
+        @raw && ! hashish?(@raw)
     end
 
     # Posts a `Representation` or `String` to this resource.
@@ -154,13 +154,19 @@ class HalClient
       "#<" + self.class.name + ": " + href + ">"
     end
 
+    # Returns the raw json representation of this representation
+    def to_json
+      raw.to_json
+    end
+
     protected
     attr_reader :hal_client
 
     MISSING = Object.new
 
     def raw
-      if @raw.nil? && @href && hal_client
+      if @raw.nil? && @href
+        (fail "unable to make requests due to missing hal client") unless hal_client
         @raw ||= hal_client.get(@href).raw
       end
 
