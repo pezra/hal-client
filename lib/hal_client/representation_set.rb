@@ -26,6 +26,7 @@ class HalClient
     # Raises KeyError if the specified link does not exist
     #   and no default_proc is provided.
     def related(link_rel, options={})
+      raise KeyError unless has_related? link_rel
       RepresentationSet.new flat_map{|it| it.related(link_rel, options){[]}.to_a }
     end
 
@@ -34,11 +35,7 @@ class HalClient
     #
     # link_rel - The link rel of interest
     def has_related?(link_rel)
-      _ = related link_rel
-      true
-
-    rescue KeyError
-      false
+      any? {|it| it.has_related?(link_rel) }
     end
 
     # Post a `Representation` or `String` to the resource.
