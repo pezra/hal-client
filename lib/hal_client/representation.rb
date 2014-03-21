@@ -36,6 +36,15 @@ class HalClient
       @hal_client.post(href, data, options)
     end
 
+    # Returns true if this representation contains the specified
+    # property.
+    #
+    # name - the name of the property to check
+    def property?(name)
+      raw.key? name
+    end
+    alias_method :has_property?, :property?
+
     # Returns The value of the specified property or the specified
     #   default value.
     #
@@ -94,13 +103,14 @@ class HalClient
     # embedded links) whose rel is `link_rel`.
     #
     # link_rel - The link rel of interest
-    def has_related?(link_rel)
+    def related?(link_rel)
       _ = related link_rel
       true
 
     rescue KeyError
       false
     end
+    alias_method :has_related?, :related?
 
     # Returns representations of resources related via the specified
     #   link rel or the specified default value.
