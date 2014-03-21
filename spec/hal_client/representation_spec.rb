@@ -46,18 +46,14 @@ HAL
     it { should eq "#<HalClient::Representation: http://example.com/foo>" }
   end
 
-  describe "#property" do
-    context "existent" do
-      subject { repr.property "prop1" }
-      it { should eq 1 }
-    end
+  specify { expect(repr.property "prop1").to eq 1 }
+  specify { expect{repr.property "nonexistent-prop"}.to raise_exception KeyError }
 
-    context "non-existent" do
-      it "raises exception" do
-        expect{repr.property 'wat'}.to raise_exception KeyError
-      end
-    end
-  end
+  specify { expect(repr.property? "prop1").to be true }
+  specify { expect(repr.has_property? "prop1").to be true }
+  specify { expect(repr.property? "nonexistent-prop").to be false }
+  specify { expect(repr.has_property? "nonexistent-prop").to be false }
+
 
   its(:href) { should eq "http://example.com/foo" }
 
@@ -178,11 +174,14 @@ HAL
   end
 
   specify { expect(subject.has_related? "link1").to be true }
+  specify { expect(subject.related? "link1").to be true }
   specify { expect(subject.has_related? "link3").to be true }
+  specify { expect(subject.related? "link3").to be true }
   specify { expect(subject.has_related? "embed1").to be true }
+  specify { expect(subject.related? "embed1").to be true }
 
-  specify { expect(subject.has_related? "no-such-link").to be false }
-  specify { expect(subject.has_related? "no-such-embed").to be false }
+  specify { expect(subject.has_related? "no-such-link-or-embed").to be false }
+  specify { expect(subject.related? "no-such-link-or-embed").to be false }
 
   context "curie links" do
     let(:raw_repr) { <<-HAL }
