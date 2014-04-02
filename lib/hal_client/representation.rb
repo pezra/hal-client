@@ -1,3 +1,4 @@
+require 'forwardable'
 require 'addressable/template'
 
 require 'hal_client'
@@ -8,6 +9,7 @@ class HalClient
   # HAL representation of a single resource. Provides access to
   # properties, links and embedded representations.
   class Representation
+    extend Forwardable
 
     # Create a new Representation
     #
@@ -65,7 +67,7 @@ class HalClient
 
     # Returns the URL of the resource this representation represents.
     def href
-      @href ||= link_section.fetch("self").fetch("href")
+      @href ||= links.hrefs('self').first
     end
 
     # Returns the value of the specified property or representations
@@ -129,14 +131,11 @@ class HalClient
         raise KeyError, "No resources are related via `#{link_rel}`"
       }
 
-      embedded = embedded_or_nil(link_rel)
-      linked = linked_or_nil(link_rel, options)
+      embedded = embedded(link_rel) { nil }
+      linked = linked(link_rel, options) { nil }
+      return default_proc.call(link_rel) if embedded.nil? and linked.nil?
 
-      if !embedded.nil? or !linked.nil?
-        RepresentationSet.new (Array(embedded) + Array(linked))
-      else
-        default_proc.call link_rel
-      end
+      RepresentationSet.new (Array(embedded) + Array(linked))
     end
 
     # Returns urls of resources related via the specified
@@ -154,6 +153,32 @@ class HalClient
     def related_hrefs(link_rel, options={}, &default_proc)
       related(link_rel, options, &default_proc).
         map(&:href)
+    end
+
+    # Returns values of the `href` member of links and the URL of
+    # embedded representations related via the specified link rel. The
+    # only difference between this and `#related_hrefs` is that this
+    # method makes no attempt to expand templated links. For templated
+    # links the returned collection will include the template pattern
+    # as encoded in the HAL document.
+    #
+    # link_rel - The link rel of interest
+    # default_proc - an option proc that will be called with `name`
+    #  to produce default value if the specified property or link does not
+    #  exist
+    #
+    # Raises KeyError if the specified link does not exist
+    #   and no default_proc is provided.
+    def raw_related_hrefs(link_rel, &default_proc)
+      default_proc ||= ->(link_rel){
+        raise KeyError, "No resources are related via `#{link_rel}`"
+      }
+
+      embedded = embedded(link_rel) { nil }
+      linked = links.hrefs(link_rel) { nil }
+      return default_proc.call(link_rel) if embedded.nil? and linked.nil?
+
+      Array(linked) + Array(embedded).map(&:href)
     end
 
     # Returns a short human readable description of this
@@ -181,36 +206,44 @@ class HalClient
       @raw
     end
 
-    def link_section
-      @link_section ||= fully_qualified raw.fetch("_links", {})
+    def links
+      @links ||= LinksSection.new raw.fetch("_links"){{}}
     end
 
     def embedded_section
       @embedded_section ||= fully_qualified raw.fetch("_embedded", {})
     end
 
-    def embedded(link_rel)
-      relations = boxed embedded_section.fetch(link_rel)
+    def embedded(link_rel, &default_proc)
+      default_proc ||= ->(link_rel) {
+        fail KeyError, "#{link_rel} embed not found"
+      }
 
-      relations.map{|it| Representation.new hal_client: hal_client, parsed_json: it}
+      relations = embedded_section.fetch(link_rel) { MISSING }
+      return default_proc.call(link_rel) if relations == MISSING
+
+      (boxed relations).map{|it| Representation.new hal_client: hal_client, parsed_json: it}
 
     rescue InvalidRepresentationError => err
       fail InvalidRepresentationError, "/_embedded/#{jpointer_esc(link_rel)} is not a valid representation"
 end
 
-    def embedded_or_nil(link_rel)
-      embedded link_rel
+    def linked(link_rel, options, &default_proc)
+      default_proc ||= ->(link_rel,_options) {
+        fail KeyError, "#{link_rel} link not found"
+      }
 
-    rescue KeyError
-      nil
-    end
+      relations = links.hrefs(link_rel) { MISSING }
+      return default_proc.call(link_rel, options) if relations == MISSING
 
-    def linked(link_rel, options)
-      relations = boxed link_section.fetch(link_rel)
-
-      relations.
-        map {|link| href_from link, options }.
-        map {|href| Representation.new href: href, hal_client: hal_client }
+      relations
+        .map {|url_or_tmpl|
+          if url_or_tmpl.respond_to? :expand
+            url_or_tmpl.expand(options).to_s
+          else
+            url_or_tmpl
+          end }
+        .map {|href| Representation.new href: href, hal_client: hal_client }
 
     rescue InvalidRepresentationError => err
       fail InvalidRepresentationError, "/_links/#{jpointer_esc(link_rel)} is not a valid link"
@@ -219,14 +252,6 @@ end
     def jpointer_esc(str)
       str.gsub "/", "~1"
     end
-
-    def linked_or_nil(link_rel, options)
-      linked link_rel, options
-
-    rescue KeyError
-      nil
-    end
-
 
     def boxed(list_hash_or_nil)
       if hashish? list_hash_or_nil
@@ -241,29 +266,17 @@ end
       end
     end
 
-    def href_from(link, options)
-      raw_href = link.fetch('href')
-
-      if link.fetch('templated', false)
-        Addressable::Template.new(raw_href).expand(options).to_s
-      else
-        raw_href
-      end
-    end
-
     def fully_qualified(relations_section)
       Hash[relations_section.map {|rel, link_info|
         [(namespaces.resolve rel), link_info]
       }]
     end
 
-    def namespaces
-      @namespaces ||= CurieResolver.new raw.fetch("_links", {}).fetch("curies", [])
-    end
-
     def hashish?(thing)
       thing.respond_to?(:fetch) && thing.respond_to?(:key?)
     end
+
+    def_delegators :links, :namespaces
 
   end
 end

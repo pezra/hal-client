@@ -7,6 +7,7 @@ class HalClient
   autoload :Representation, 'hal_client/representation'
   autoload :RepresentationSet, 'hal_client/representation_set'
   autoload :CurieResolver, 'hal_client/curie_resolver'
+  autoload :LinksSection, 'hal_client/links_section'
   autoload :Collection, 'hal_client/collection'
   autoload :InvalidRepresentationError, 'hal_client/errors'
   autoload :NotACollectionError, 'hal_client/errors'
