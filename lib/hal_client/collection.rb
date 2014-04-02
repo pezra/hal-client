@@ -52,6 +52,15 @@ class HalClient
       end
     end
 
+    # Returns one or more randomly selected item from the first page
+    # of the collection.
+    #
+    # count - number of items to return. If specified return type will
+    #   an collection. Default: return a single item
+    def sample(*arg)
+      first_page.related("item").sample(*arg)
+    end
+
     protected
 
     attr_reader :first_page

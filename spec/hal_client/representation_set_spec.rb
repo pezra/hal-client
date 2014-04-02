@@ -21,16 +21,20 @@ describe HalClient::RepresentationSet do
     end
   end
 
-  its(:count) { should eq 2 }
-  its(:empty?) { should be_false }
+  specify { expect(repr_set.count).to eq 2 }
+  specify { expect(repr_set.empty?).to be false }
 
   describe "#any?" do
-    it "returns true if there are any" do
-      expect(subject.any?{|it| it == foo_repr }).to be_true
+    it "returns true if there are any matching" do
+      expect(subject.any?{|it| it == foo_repr }).to be true
     end
 
-    it "returns false if there aren't any" do
-      expect(subject.any?{|it| false }).to be_false
+    it "returns true if there are any matchin" do
+      expect(subject.any?).to be true
+    end
+
+    it "returns false if there aren't any matching" do
+      expect(subject.any?{|it| false }).to be false
     end
   end
 
@@ -126,7 +130,7 @@ describe HalClient::RepresentationSet do
     match { |repr_set|
       repr_set.any?{|it| it.href == url}
     }
-    failure_message_for_should { |repr_set|
+    failure_message { |repr_set|
       "Expected representation of <#{url}> but found only #{repr_set.map(&:href)}"
     }
   end

@@ -8,7 +8,7 @@ describe HalClient::Representation do
   ,"_links": {
     "self": { "href": "http://example.com/foo" }
     ,"link1": { "href": "http://example.com/bar" }
-    ,"link2": { "href": "http://example.com/people{?name}"
+    ,"templated_link": { "href": "http://example.com/people{?name}"
                 ,"templated": true }
     ,"link3": [{ "href": "http://example.com/link3-a" }
                ,{ "href": "http://example.com/link3-b" }]
@@ -32,18 +32,17 @@ HAL
       repr.related("link1").post("abc")
     end
 
-    specify {
-      expect(
-        post_request.
-        with(:body => "abc", :headers => {'Content-Type' => 'application/hal+json'})
-      ).to have_been_made
+    specify("makes request") {
+      expect(post_request.with(:body => "abc",
+                                :headers => {'Content-Type' => 'application/hal+json'}))
+        .to have_been_made
     }
   end
 
   describe "#to_s" do
     subject(:return_val) { repr.to_s }
 
-    it { should eq "#<HalClient::Representation: http://example.com/foo>" }
+    it { is_expected.to eq "#<HalClient::Representation: http://example.com/foo>" }
   end
 
   specify { expect(repr.property "prop1").to eq 1 }
@@ -55,7 +54,7 @@ HAL
   specify { expect(repr.has_property? "nonexistent-prop").to be false }
 
 
-  its(:href) { should eq "http://example.com/foo" }
+  specify { expect(subject.href).to eq "http://example.com/foo" }
 
   describe "#fetch" do
     context "for existent property" do
@@ -135,7 +134,7 @@ HAL
     end
 
     context "for existent templated link" do
-      subject { repr.related "link2", name: "bob" }
+      subject { repr.related "templated_link", name: "bob" }
       it { should have(1).item }
       it { should include_representation_of "http://example.com/people?name=bob"  }
     end
@@ -153,25 +152,16 @@ HAL
     end
   end
 
-  describe "#related_hrefs" do
-    context "for existent link" do
-      subject { repr.related_hrefs "link1" }
-      it { should have(1).item }
-      it { should include "http://example.com/bar" }
-    end
+  specify { expect(repr.related_hrefs "link1")
+      .to contain_exactly "http://example.com/bar" }
+  specify { expect(repr.related_hrefs "embed1")
+      .to contain_exactly "http://example.com/baz" }
+  specify { expect { repr.related_hrefs 'wat' }.to raise_exception KeyError }
 
-    context "for existent embedded" do
-      subject { repr.related_hrefs "embed1" }
-      it { should have(1).item }
-      it { should include "http://example.com/baz" }
-    end
-
-    context "non-existent item w/o default" do
-      it "raises exception" do
-        expect{repr.related_hrefs 'wat'}.to raise_exception KeyError
-      end
-    end
-  end
+  specify { expect(repr.raw_related_hrefs("templated_link").map(&:pattern))
+      .to contain_exactly "http://example.com/people{?name}" }
+  specify { expect(repr.raw_related_hrefs("link1"))
+      .to contain_exactly "http://example.com/bar" }
 
   specify { expect(subject.has_related? "link1").to be true }
   specify { expect(subject.related? "link1").to be true }
@@ -193,17 +183,17 @@ HAL
 }
 HAL
 
-    describe "#related return value " do
+    describe "#related return value" do
       subject(:return_val) { repr.related("http://example.com/rels/bar") }
       it { should include_representation_of "http://example.com/bar" }
     end
 
-    describe "#[] return value " do
+    describe "#[] return value" do
       subject(:return_val) { repr["http://example.com/rels/bar"] }
       it { should include_representation_of "http://example.com/bar" }
     end
 
-    describe "#related_hrefs return value " do
+    describe "#related_hrefs return value" do
       subject(:return_val) { repr.related_hrefs("http://example.com/rels/bar") }
       it { should include "http://example.com/bar" }
     end
@@ -276,7 +266,7 @@ HAL
     match { |repr_set|
       repr_set.any?{|it| it.href == url}
     }
-    failure_message_for_should { |repr_set|
+    failure_message { |repr_set|
       "Expected representation of <#{url}> but found only #{repr_set.map(&:href)}"
     }
   end
