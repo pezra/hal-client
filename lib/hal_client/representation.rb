@@ -133,12 +133,9 @@ class HalClient
 
       embedded = embedded(link_rel) { nil }
       linked = linked(link_rel, options) { nil }
+      return default_proc.call(link_rel) if embedded.nil? and linked.nil?
 
-      if !embedded.nil? or !linked.nil?
-        RepresentationSet.new (Array(embedded) + Array(linked))
-      else
-        default_proc.call link_rel
-      end
+      RepresentationSet.new (Array(embedded) + Array(linked))
     end
 
     # Returns urls of resources related via the specified
@@ -179,12 +176,9 @@ class HalClient
 
       embedded = embedded(link_rel) { nil }
       linked = links.hrefs(link_rel) { nil }
+      return default_proc.call(link_rel) if embedded.nil? and linked.nil?
 
-      if !(embedded.nil? and linked.nil?)
-        Array(linked) + Array(embedded).map(&:href)
-      else
-        default_proc.call link_rel
-      end
+      Array(linked) + Array(embedded).map(&:href)
     end
 
     # Returns a short human readable description of this
