@@ -20,8 +20,11 @@ class HalClient
   #   :content_type - a single content type that should be
   #     prepended to the `Content-Type` header field of each request.
   def initialize(options={})
-    @default_accept = options.fetch(:accept, 'application/hal+json')
-    @default_content_type = options.fetch(:content_type, 'application/hal+json')
+    accept       = options.fetch(:accept, 'application/hal+json')
+    content_type = options.fetch(:content_type, 'application/hal+json')
+    headers      = options.fetch(:headers, {})
+
+    @headers = {accept: accept, content_type: content_type}.merge(headers)
   end
 
   # Returns a `Representation` of the resource identified by `url`.
@@ -50,17 +53,16 @@ class HalClient
 
   protected
 
-  attr_reader :default_accept, :default_content_type
+  attr_reader :headers
 
   def get_options(overrides)
-    { accept: default_accept }.merge overrides
+    headers.dup.tap do |get_headers|
+      get_headers.delete(:content_type)
+    end
   end
 
   def post_options(overrides)
-    {
-      accept: default_accept,
-      content_type: default_content_type
-    }.merge overrides
+    headers.merge(overrides)
   end
 
   module EntryPointCovenienceMethods
