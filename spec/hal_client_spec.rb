@@ -52,6 +52,13 @@ describe HalClient do
         expect(request.with(headers: headers)).to have_been_made
       end
     end
+
+    context "header overrides" do
+      let!(:return_val) { client.get "http://example.com/foo", { "DummyHeader" => "Test" } }
+      it "sends the supplied header" do
+        expect(request.with(headers: { "DummyHeader" => "Test" })).to have_been_made
+      end
+    end
   end
 
   describe ".get(<url>)" do

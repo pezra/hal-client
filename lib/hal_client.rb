@@ -19,6 +19,7 @@ class HalClient
   #     prepended to the `Accept` header field of each request.
   #   :content_type - a single content type that should be
   #     prepended to the `Content-Type` header field of each request.
+  #   :headers - a hash of other headers to send on each request.
   def initialize(options={})
     accept       = options.fetch(:accept, 'application/hal+json')
     content_type = options.fetch(:content_type, 'application/hal+json')
@@ -55,10 +56,13 @@ class HalClient
 
   attr_reader :headers
 
+  # Exclude headers that shouldn't go with a GET
   def get_options(overrides)
-    headers.dup.tap do |get_headers|
+    @cleansed_get_options ||= headers.dup.tap do |get_headers|
       get_headers.delete(:content_type)
     end
+
+    @cleansed_get_options.merge overrides
   end
 
   def post_options(overrides)
