@@ -37,6 +37,28 @@ describe HalClient do
           to have_been_made
       end
     end
+
+    context "explicit content type" do
+      subject(:client) { HalClient.new content_type: 'custom' }
+      it "does not send the content type header" do
+        expect(request.with(headers: {'Accept' => 'application/hal+json'})).to have_been_made
+      end
+    end
+
+    context "other headers" do
+      let(:headers) { {"Authorization" => "Bearer f73c04b0970f1deb6005fab53edd1708"} }
+      subject(:client) { HalClient.new headers: headers }
+      it "sends the supplied header" do
+        expect(request.with(headers: headers)).to have_been_made
+      end
+    end
+
+    context "header overrides" do
+      let!(:return_val) { client.get "http://example.com/foo", { "DummyHeader" => "Test" } }
+      it "sends the supplied header" do
+        expect(request.with(headers: { "DummyHeader" => "Test" })).to have_been_made
+      end
+    end
   end
 
   describe ".get(<url>)" do
@@ -80,6 +102,14 @@ describe HalClient do
       it "sends specified content-type header" do
         expect(post_request.with(headers: {'Content-Type' => 'app/test'})).
           to have_been_made
+      end
+    end
+
+    context "other headers" do
+      let(:headers) { {"Authorization" => "Bearer f73c04b0970f1deb6005fab53edd1708"} }
+      subject(:client) { HalClient.new headers: headers }
+      it "sends the supplied header" do
+        expect(post_request.with(headers: headers)).to have_been_made
       end
     end
 
