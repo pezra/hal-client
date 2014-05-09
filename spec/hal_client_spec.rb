@@ -27,7 +27,7 @@ describe HalClient do
       it("should have been made") { should have_been_made }
 
       it "sends accept header" do
-        expect(request.with(headers: {'Accept' => 'application/hal+json'})).
+        expect(request.with(headers: {'Accept' => /application\/hal\+json/i})).
           to have_been_made
       end
     end
@@ -35,7 +35,7 @@ describe HalClient do
     context "explicit accept" do
       subject(:client) { HalClient.new accept: 'app/test' }
       it "sends specified accept header" do
-        expect(request.with(headers: {'Accept' => 'app/test'})).
+        expect(request.with(headers: {'Accept' => /app\/test/i})).
           to have_been_made
       end
     end
@@ -43,7 +43,7 @@ describe HalClient do
     context "explicit content type" do
       subject(:client) { HalClient.new content_type: 'custom' }
       it "does not send the content type header" do
-        expect(request.with(headers: {'Accept' => 'application/hal+json'})).to have_been_made
+        expect(request.with(headers: {'Accept' => /application\/hal\+json/i})).to have_been_made
       end
     end
 
@@ -123,7 +123,7 @@ describe HalClient do
       it("should have been made") { should have_been_made }
 
       it "sends accept header" do
-        expect(request.with(headers: {'Accept' => 'application/hal+json'})).
+        expect(request.with(headers: {'Accept' => /application\/hal\+json/})).
           to have_been_made
       end
     end
