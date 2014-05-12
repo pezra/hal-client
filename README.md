@@ -131,6 +131,10 @@ Or install it yourself as:
 
     $ gem install hal-client
 
+## Upgrading from 2.x to 3.x
+
+For most uses no change to client code is required. At 3.0 the underlying HTTP library changed to <https://rubygems.org/gems/http> to better support our parallelism needs. This changes the interface of `#get` and `#post` on `HalClient` and `HalClient::Representation` in the situation where the response is not a valid HAL document. In those situations the return value is now a `HTTP::Response` object, rather than a `RestClient::Response`.
+
 ## Upgrading from 1.x to 2.x
 
 The signature of `HalClient::Representation#new` changed such that keyword arguments are required. Any direct uses of that method must be changed. This is the only breaking change.
