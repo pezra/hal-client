@@ -7,6 +7,8 @@ describe HalClient do
     it { should be_kind_of HalClient }
   end
 
+  subject(:client) { HalClient.new }
+
   describe '.new w/ custom accept' do
     subject { HalClient.new(accept: "application/vnd.myspecialmediatype") }
     it { should be_kind_of HalClient }
@@ -25,7 +27,7 @@ describe HalClient do
       it("should have been made") { should have_been_made }
 
       it "sends accept header" do
-        expect(request.with(headers: {'Accept' => 'application/hal+json'})).
+        expect(request.with(headers: {'Accept' => /application\/hal\+json/i})).
           to have_been_made
       end
     end
@@ -33,7 +35,7 @@ describe HalClient do
     context "explicit accept" do
       subject(:client) { HalClient.new accept: 'app/test' }
       it "sends specified accept header" do
-        expect(request.with(headers: {'Accept' => 'app/test'})).
+        expect(request.with(headers: {'Accept' => /app\/test/i})).
           to have_been_made
       end
     end
@@ -41,7 +43,7 @@ describe HalClient do
     context "explicit content type" do
       subject(:client) { HalClient.new content_type: 'custom' }
       it "does not send the content type header" do
-        expect(request.with(headers: {'Accept' => 'application/hal+json'})).to have_been_made
+        expect(request.with(headers: {'Accept' => /application\/hal\+json/i})).to have_been_made
       end
     end
 
@@ -61,6 +63,54 @@ describe HalClient do
     end
   end
 
+  context "server responds with client error" do
+    let!(:request) { stub_request(:any, "http://example.com/foo").
+      to_return body: "Bad client! No cookie!", status: 400  }
+
+    it "#get raises HttpClientError" do
+      expect{client.get "http://example.com/foo"}.to raise_exception HalClient::HttpClientError
+    end
+
+    it "#get attaches response to the raised error" do
+      err = client.get("http://example.com/foo") rescue $!
+      expect(err.response).to be_kind_of HTTP::Response
+    end
+
+
+    it "#post raises HttpClientError" do
+      expect{client.post "http://example.com/foo", "foo"}.to raise_exception HalClient::HttpClientError
+    end
+
+    it "#post attaches response to the raise error" do
+      err = client.post("http://example.com/foo", "") rescue $!
+      expect(err.response).to be_kind_of HTTP::Response
+    end
+  end
+
+  context "server responds with server error" do
+    let!(:request) { stub_request(:any, "http://example.com/foo").
+      to_return body: "Bad server! No cookie!", status: 500  }
+
+    it "#get raises HttpServerError" do
+      expect{client.get "http://example.com/foo"}.to raise_exception HalClient::HttpServerError
+    end
+
+    it "#get attaches response to the raised error" do
+      err = client.get("http://example.com/foo") rescue $!
+      expect(err.response).to be_kind_of HTTP::Response
+    end
+
+
+    it "#post raises HttpServerError" do
+      expect{client.post "http://example.com/foo", "foo"}.to raise_exception HalClient::HttpServerError
+    end
+
+    it "#post attaches response to the raise error" do
+      err = client.post("http://example.com/foo", "") rescue $!
+      expect(err.response).to be_kind_of HTTP::Response
+    end
+  end
+
   describe ".get(<url>)" do
     let!(:return_val) { HalClient.get "http://example.com/foo" }
 
@@ -73,7 +123,7 @@ describe HalClient do
       it("should have been made") { should have_been_made }
 
       it "sends accept header" do
-        expect(request.with(headers: {'Accept' => 'application/hal+json'})).
+        expect(request.with(headers: {'Accept' => /application\/hal\+json/})).
           to have_been_made
       end
     end

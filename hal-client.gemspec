@@ -18,13 +18,13 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rest-client", "~> 1.6"
+  spec.add_dependency "http", "~> 0.6.1"
   spec.add_dependency "addressable", "~> 2.3"
   spec.add_dependency "multi_json", "~> 1.9"
 
   spec.add_development_dependency "bundler", "~> 1.5"
   spec.add_development_dependency "rake", "~> 10.1"
   spec.add_development_dependency "rspec", "~> 3.0.0.beta"
-  spec.add_development_dependency "webmock", "~> 1.16"
+  spec.add_development_dependency "webmock", ["~> 1.17", ">= 1.17.4"]
   spec.add_development_dependency "rspec-collection_matchers"
 end
