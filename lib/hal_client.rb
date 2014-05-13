@@ -11,7 +11,9 @@ class HalClient
   autoload :Collection, 'hal_client/collection'
   autoload :InvalidRepresentationError, 'hal_client/errors'
   autoload :NotACollectionError, 'hal_client/errors'
+  autoload :HttpError, 'hal_client/errors'
   autoload :HttpClientError, 'hal_client/errors'
+  autoload :HttpServerError, 'hal_client/errors'
 
   # Initializes a new client instance
   #
