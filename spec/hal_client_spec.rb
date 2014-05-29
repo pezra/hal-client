@@ -131,13 +131,32 @@ describe HalClient do
 
   describe "#post(<url>)" do
     subject(:client) { HalClient.new }
-    let!(:return_val) { client.post "http://example.com/foo", post_data }
+    let(:url) { "http://example.com/foo" }
+    let(:return_val) { client.post url, post_data }
 
     it "returns a HalClient::Representation" do
       expect(return_val).to be_kind_of HalClient::Representation
     end
 
+    context "201 response w/ location header and w/o body" do
+      let(:url) { "http://example.com/lhnb" }
+      let!(:req) { stub_request(:post, url).
+                     to_return(status: 201,
+                               body: nil,
+                               headers: {"Location" => "http://example.com/new"})
+      }
+
+      it "returns a HalClient::Representation" do
+        expect(return_val).to be_kind_of HalClient::Representation
+      end
+
+      it "returns representation of new resource" do
+        expect(return_val.href).to eq "http://example.com/new"
+      end
+    end
+
     describe "request" do
+      before do return_val end
       subject { post_request }
       it("should have been made") { should have_been_made }
 
@@ -148,6 +167,7 @@ describe HalClient do
     end
 
     context "explicit content type" do
+      before do return_val end
       subject(:client) { HalClient.new content_type: 'app/test' }
       it "sends specified content-type header" do
         expect(post_request.with(headers: {'Content-Type' => 'app/test'})).
@@ -156,6 +176,7 @@ describe HalClient do
     end
 
     context "other headers" do
+      before do return_val end
       let(:headers) { {"Authorization" => "Bearer f73c04b0970f1deb6005fab53edd1708"} }
       subject(:client) { HalClient.new headers: headers }
       it "sends the supplied header" do
@@ -163,7 +184,7 @@ describe HalClient do
       end
     end
 
-    context "with no response body" do
+    context "with no response body and no location header" do
       subject { empty_post_request }
       let!(:return_val) { client.post "http://example.com/foo", nil }
 
@@ -190,6 +211,7 @@ describe HalClient do
       end
     end
   end
+
 
   let(:post_data) { "ABC" }
 

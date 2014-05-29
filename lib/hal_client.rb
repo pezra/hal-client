@@ -89,7 +89,11 @@ class HalClient
       begin
         Representation.new hal_client: self, parsed_json: MultiJson.load(resp.to_s)
       rescue MultiJson::ParseError, InvalidRepresentationError => e
-        resp
+        if resp.headers["Location"]
+          Representation.new hal_client: self, href: resp.headers["Location"]
+        else
+          resp
+        end
       end
 
     when 400...500
