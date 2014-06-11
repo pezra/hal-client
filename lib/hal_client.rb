@@ -76,7 +76,7 @@ class HalClient
                  data
                end
 
-    interpret_response client_for_post(headers).post(url, body: req_body)
+    interpret_response client_for_post(override_headers: headers).post(url, body: req_body)
   end
 
   protected

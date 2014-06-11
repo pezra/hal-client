@@ -166,6 +166,18 @@ describe HalClient do
       end
     end
 
+    describe "request with different content type" do
+      let(:return_val) { client.post url, post_data, "Content-Type" => "text/plain" }
+      before do return_val end
+      subject { post_request }
+      it("should have been made") { should have_been_made }
+
+      it "sends content type header" do
+        expect(post_request.with(headers: {'Content-Type' => 'text/plain'})).
+          to have_been_made
+      end
+    end
+
     context "explicit content type" do
       before do return_val end
       subject(:client) { HalClient.new content_type: 'app/test' }
