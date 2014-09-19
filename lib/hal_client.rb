@@ -139,7 +139,7 @@ class HalClient
 
   # Returns an HTTP client.
   def base_client
-    @base_client ||= HTTP::Client.new
+    @base_client ||= HTTP::Client.new(follow: true)
   end
 
   attr_reader :default_entity_request_headers, :default_message_request_headers
