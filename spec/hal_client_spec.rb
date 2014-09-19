@@ -224,6 +224,20 @@ describe HalClient do
     end
   end
 
+  context "get request redirection" do
+    let!(:request) { stub_request(:get, "http://example.com/foo").
+      to_return(status: 301, headers: { 'Location' => "http://example.com/bar" } ) }
+
+    let!(:second_req) { stub_request(:get, "http://example.com/bar").
+      to_return(body: "{}") }
+
+    let!(:response) { client.get "http://example.com/foo" }
+
+    it "follows redirects" do
+      expect(second_req).to have_been_made
+    end
+  end
+
 
   let(:post_data) { "ABC" }
 
