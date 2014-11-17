@@ -80,9 +80,34 @@ class HalClient
                           blk)
     end
 
+    # Returns a RepresentationEditor exactly like this one except that
+    # is has an additional link to the specified target with the
+    # specified rel.
+    #
+    # rel - The type of relationship this link represents
+    # target - URL of the target of the link
+    # templated - is this link templated? Default: false
+    def add_link(rel, target, templated: false)
+      link_obj = { "href" => target.to_s }
+      link_obj = link_obj.merge("templated" => true) if templated
+
+      with_new_link = Array(raw.fetch("_links", {}).fetch(rel, [])) + [link_obj]
+      updated_links_section =  raw.fetch("_links", {}).merge(rel => with_new_link)
+
+      self.class.new(orig_repr, raw.merge("_links" => updated_links_section))
+    end
+
     protected
 
     attr_reader :orig_repr, :raw
+
+    def Array(thing)
+      if Hash === thing
+        [thing]
+      else
+        Kernel.Array(thing)
+      end
+    end
 
     def hal_client
       orig_repr.hal_client
