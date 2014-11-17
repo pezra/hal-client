@@ -173,6 +173,10 @@ HAL
   specify { expect(subject.has_related? "no-such-link-or-embed").to be false }
   specify { expect(subject.related? "no-such-link-or-embed").to be false }
 
+  specify { expect(subject.to_json).to be_equivalent_json_to raw_repr }
+  specify { expect(subject.to_hal).to be_equivalent_json_to raw_repr }
+
+
   context "curie links" do
     let(:raw_repr) { <<-HAL }
 { "_links": {
@@ -270,6 +274,7 @@ HAL
       "Expected representation of <#{url}> but found only #{repr_set.map(&:href)}"
     }
   end
+
 end
 
 describe HalClient::Representation, "w/o hal_client" do
@@ -294,4 +299,6 @@ describe HalClient::Representation, "w/o hal_client" do
   }
 }
   HAL
+
+
 end

@@ -15,6 +15,8 @@ class HalClient
   autoload :HttpClientError, 'hal_client/errors'
   autoload :HttpServerError, 'hal_client/errors'
 
+  autoload :RepresentationEditor, 'hal_client/representation_editor'
+
   # Initializes a new client instance
   #
   # options - hash of configuration options
