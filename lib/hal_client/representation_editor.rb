@@ -57,25 +57,11 @@ class HalClient
     #
     # Yields Representation of the target for each link.
     def reject_links(rel, &blk)
-      return self unless raw.fetch("_links", {}).has_key?(rel)
-
-      filtered_rel = if block_given?
-                       filtered =
-                         [raw["_links"][rel]].flatten
-                         .reject{|it| blk.call(Representation.new(href: it["href"],
-                                                                  hal_client: hal_client)) }
-                     else
-                       []
-                     end
-
-
-      new_links = if filtered_rel.empty?
-                    raw["_links"].reject{|k,_| rel == k}
-                  else
-                    raw["_links"].merge(rel => filtered_rel )
-                  end
-
-      self.class.new(orig_repr, raw.merge("_links" => new_links))
+      reject_from_section("_links",
+                          rel,
+                          ->(l) {Representation.new(href: l["href"],
+                                                    hal_client: hal_client)},
+                          blk)
     end
 
     # Returns a RepresentationEditor for a representation like the
@@ -87,26 +73,11 @@ class HalClient
     #
     # Yields Representation of the target for each embedded.
     def reject_embedded(rel, &blk)
-      return self unless raw.fetch("_embedded", {}).has_key?(rel)
-
-      filtered_rel = if block_given?
-                       filtered =
-                         [raw["_embedded"][rel]].flatten
-                         .reject{|it| blk.call(Representation.new(parsed_json: it,
-                                                                  hal_client: hal_client)) }
-                     else
-                       []
-                     end
-
-      new_embedded = if filtered_rel.empty?
-                       raw["_embedded"].reject{|k,_| rel == k}
-                     else
-                       raw["_embedded"].merge(rel => filtered_rel )
-                     end
-
-
-
-      self.class.new(orig_repr, raw.merge("_embedded" => new_embedded))
+      reject_from_section("_embedded",
+                          rel,
+                          ->(e) {Representation.new(parsed_json: e,
+                                                    hal_client: hal_client)},
+                          blk)
     end
 
     protected
@@ -115,6 +86,25 @@ class HalClient
 
     def hal_client
       orig_repr.hal_client
+    end
+
+    def reject_from_section(name, rel, coercion, filter=nil)
+      return self unless raw.fetch(name, {}).has_key?(rel)
+
+      filtered_rel = if filter
+        [raw[name].fetch(rel,[])].flatten
+          .reject{|it| filter.call(coercion.call(it)) }
+      else
+        []
+      end
+
+      new_sec = if filtered_rel.empty?
+                  raw[name].reject{|k,_| rel == k}
+                else
+                  raw[name].merge(rel => filtered_rel )
+                end
+
+      self.class.new(orig_repr, raw.merge(name => new_sec))
     end
   end
 end
