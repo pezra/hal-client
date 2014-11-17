@@ -85,11 +85,26 @@ HalClient provides a high level abstraction for paged collections encoded using 
 
 If the collection is paged this will navigate to the next page after yielding all the items on the current page. `HalClient::Collection` is `Enumerable` so all your favorite collection methods are available.
 
-### POST requests
+### PUT/POST/PATCH requests
 
-HalClient supports POST requests to remote resources via it's `#post` method.
+HalClient supports PUT/POST/PATCH requests to remote resources via it's `#put`, `#post` and `#patch` methods, respectively.
+
+    blog.put(update_article_as_hal_json_str)
+    #=> #<Representation: http://blog.me>
 
     blog.post(new_article_as_hal_json_str)
+    #=> #<Representation: http://blog.me>
+
+    blog.patch(diffs_of_article_as_hal_json_str)
+    #=> #<Representation: http://blog.me>
+
+The first argument to `#put`, `#post` and `#patch` may be a `String` or any object that responds to `#to_hal`. Additional options may be passed to change the content type of the post, etc.
+
+### PUT requests
+
+HalClient supports PUT requests to remote resources via it's `#put` method.
+
+    blog.put(new_article_as_hal_json_str)
     #=> #<Representation: http://blog.me>
 
 The argument to post may be `String` or any object that responds to `#to_hal`. Additional options may be passed to change the content type of the post, etc.
