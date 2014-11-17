@@ -25,7 +25,7 @@ class HalClient
     #   start. This object will *not* be modified!
     # raw - Not for public use! Used internally for handling multi-
     #   staged changes.
-    def initialize(a_representation, raw = a_representation.send(:raw))
+    def initialize(a_representation, raw = a_representation.raw)
       @orig_repr = a_representation
       @raw = raw
     end
@@ -114,7 +114,7 @@ class HalClient
     attr_reader :orig_repr, :raw
 
     def hal_client
-      orig_repr.send(:hal_client)
+      orig_repr.hal_client
     end
   end
 end

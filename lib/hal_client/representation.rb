@@ -193,11 +193,7 @@ class HalClient
     end
     alias_method :to_hal, :to_json
 
-    protected
-    attr_reader :hal_client
-
-    MISSING = Object.new
-
+    # Internal: Returns parsed json document
     def raw
       if @raw.nil? && @href
         (fail "unable to make requests due to missing hal client") unless hal_client
@@ -206,6 +202,15 @@ class HalClient
 
       @raw
     end
+
+    # Internal: Returns the HalClient used to retrieve this
+    # representation
+    attr_reader :hal_client
+
+    protected
+
+    MISSING = Object.new
+
 
     def links
       @links ||= LinksSection.new raw.fetch("_links"){{}}
