@@ -113,15 +113,18 @@ The argument to post may be `String` or any object that responds to `#to_hal`. A
 
 HalClient supports editing of representations. This is useful when
 creating resources from a template or updating resources. For example,
-consider a document resource whose "author" relationship you want to
-change.
+consider a resource whose "author" relationship we want to update to
+point the author's new profile page.
 
 
 ```ruby
 doc = HalClient.get("http://example.com/somedoc")
-improved_doc = HalClient::RepresentationEditor.new(doc)
-                 .reject_related("author") { |it| it.property("name") == "John Plagiarist"}
-doc.put(improved_doc)
+improved_doc =
+  HalClient::RepresentationEditor.new(doc)                              # create an editor
+    .reject_related("author") { |it| it.property("name") == "John Doe"} # unlink Johe Doe's old page
+    .add_link("author", "http://example.com/john-doe")                  # add link to his new page
+
+doc.put(improved_doc)                                                   # save changes to server
 
 ```
 
