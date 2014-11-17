@@ -86,8 +86,11 @@ class HalClient
     #
     # rel - The type of relationship this link represents
     # target - URL of the target of the link
-    # templated - is this link templated? Default: false
-    def add_link(rel, target, templated: false)
+    # opts
+    #   :templated - is this link templated? Default: false
+    def add_link(rel, target, opts={})
+      templated = opts.fetch(:templated, false)
+      
       link_obj = { "href" => target.to_s }
       link_obj = link_obj.merge("templated" => true) if templated
 
