@@ -191,6 +191,7 @@ class HalClient
     def to_json
       raw.to_json
     end
+    alias_method :to_hal, :to_json
 
     protected
     attr_reader :hal_client
