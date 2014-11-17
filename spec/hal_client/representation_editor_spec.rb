@@ -52,6 +52,17 @@ RSpec.describe HalClient::RepresentationEditor do
       expect(altered).not_to have_embedded("replies")
     end
 
+    it "rejects from body links and embedded sections matching block" do
+      altered = subject.reject_related("replies") {|it| it["value"] == "+1" }
+
+      expect(altered).not_to have_link("replies", hash_including("value" => "+1"))
+      expect(altered).not_to have_embedded("replies", hash_including("value" => "+1"))
+
+      expect(altered).to have_link("replies", hash_including("value" => "-1"))
+                          .or(have_embedded("replies", hash_including("value" => "-1")))
+
+    end
+
     specify { expect(subject.reject_related("absent-rel"))
               .to be_equivalent_json_to raw_hal }
 

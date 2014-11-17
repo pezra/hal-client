@@ -31,7 +31,7 @@ In the example above `item` is the link rel. The `#related` method extracts embe
     all_the_authors.first.property("name")
     # => "Bob Smith"
 
-#### Request timing
+#### Request evaluation order
 
 If the `author` relationship was a regular link (that is, not embedded) in the above example the HTTP GET to retrieve Bob's representation from the server does not happen until the `#property` method is called. This lazy dereferencing allows for working with efficiently with larger relationship sets.
 
@@ -74,15 +74,6 @@ All `HalClient::Representation`s exposed an `#href` attribute which is its ident
     blog['title'] # => "Some Person's Blog"
     blog['item']  # =>  #<RepresentationSet:...>
 
-### POST requests
-
-HalClient supports POST requests to remote resources via it's `#post` method.
-
-    blog.post(new_article_as_hal_json_str)
-    #=> #<Representation: http://blog.me>
-
-The argument to post may be `String` or any object that responds to `#to_hal`. Additional options may be passed to change the content type of the post, etc.
-
 ### Paged collections
 
 HalClient provides a high level abstraction for paged collections encoded using [standard `item`, `next` and `prev` link relations](http://tools.ietf.org/html/rfc6573).
@@ -93,6 +84,33 @@ HalClient provides a high level abstraction for paged collections encoded using 
     end
 
 If the collection is paged this will navigate to the next page after yielding all the items on the current page. `HalClient::Collection` is `Enumerable` so all your favorite collection methods are available.
+
+### POST requests
+
+HalClient supports POST requests to remote resources via it's `#post` method.
+
+    blog.post(new_article_as_hal_json_str)
+    #=> #<Representation: http://blog.me>
+
+The argument to post may be `String` or any object that responds to `#to_hal`. Additional options may be passed to change the content type of the post, etc.
+
+### Editing representation
+
+HalClient supports editing of representations. This is useful when
+creating resources from a template or updating resources. For example,
+consider a document resource whose "author" relationship you want to
+change.
+
+
+```ruby
+doc = HalClient.get("http://example.com/somedoc")
+improved_doc = HalClient::RepresentationEditor.new(doc)
+                 .reject_related("author") { |it| it.property("name") == "John Plagiarist"}
+doc.put(improved_doc)
+
+```
+
+This removes "John Plagerist" from the documents list of authors and then performs an HTTP PUT request with the updated document.
 
 ### Custom media types
 
