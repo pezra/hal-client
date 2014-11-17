@@ -81,6 +81,36 @@ class HalClient
     interpret_response client_for_post(override_headers: headers).post(url, body: req_body)
   end
 
+  # Put a `Representation` or `String` to the resource identified at `url`.
+  #
+  # url - The URL of the resource of interest.
+  # data - a `String` or an object that responds to `#to_hal`
+  # headers - custom header fields to use for this request
+  def put(url, data, headers={})
+    req_body = if data.respond_to? :to_hal
+                 data.to_hal
+               else
+                 data
+               end
+
+    interpret_response client_for_post(override_headers: headers).put(url, body: req_body)
+  end
+
+  # Patch a `Representation` or `String` to the resource identified at `url`.
+  #
+  # url - The URL of the resource of interest.
+  # data - a `String` or an object that responds to `#to_hal`
+  # headers - custom header fields to use for this request
+  def patch(url, data, headers={})
+    req_body = if data.respond_to? :to_hal
+                 data.to_hal
+               else
+                 data
+               end
+
+    interpret_response client_for_post(override_headers: headers).patch(url, body: req_body)
+  end
+
   protected
 
   attr_reader :headers

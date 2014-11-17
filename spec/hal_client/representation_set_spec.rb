@@ -81,6 +81,42 @@ describe HalClient::RepresentationSet do
     end
   end
 
+  describe "#put" do
+    context "with a single representation" do
+      subject(:repr_single_set) { described_class.new([foo_repr]) }
+      let!(:put_request) { stub_request(:put, "example.com/foo") }
+
+      before(:each) do
+        repr_single_set.put("abc")
+      end
+
+      it "makes an HTTP PUT with the data within the representation" do
+        expect(
+          put_request.
+          with(:body => "abc", :headers => {'Content-Type' => 'application/hal+json'})
+          ).to have_been_made
+      end
+    end
+  end
+
+  describe "#patch" do
+    context "with a single representation" do
+      subject(:repr_single_set) { described_class.new([foo_repr]) }
+      let!(:patch_request) { stub_request(:patch, "example.com/foo") }
+
+      before(:each) do
+        repr_single_set.patch("abc")
+      end
+
+      it "makes an HTTP PATCH with the data within the representation" do
+        expect(
+          patch_request.
+          with(:body => "abc", :headers => {'Content-Type' => 'application/hal+json'})
+          ).to have_been_made
+      end
+    end
+  end
+
   let(:a_client) { HalClient.new }
 
   let(:foo_repr) { HalClient::Representation.new hal_client: a_client, parsed_json: MultiJson.load(foo_hal)}

@@ -49,6 +49,28 @@ class HalClient
       first.post(data, options)
     end
 
+    # Put a `Representation` or `String` to the resource.
+    #
+    # NOTE: This only works for a single representation.
+    #
+    # data - a `String` or an object that responds to `#to_hal`
+    # options - set of options to pass to `HalClient#put`
+    def put(data, options={})
+      raise NotImplementedError, "We only puts to singular resources." if count > 1
+      first.put(data, options)
+    end
+
+    # Patch a `Representation` or `String` to the resource.
+    #
+    # NOTE: This only works for a single representation.
+    #
+    # data - a `String` or an object that responds to `#to_hal`
+    # options - set of options to pass to `HalClient#patch`
+    def patch(data, options={})
+      raise NotImplementedError, "We only patchs to singular resources." if count > 1
+      first.patch(data, options)
+    end
+
     protected
 
     attr_reader :reprs

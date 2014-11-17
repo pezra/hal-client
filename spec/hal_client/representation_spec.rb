@@ -25,15 +25,47 @@ HAL
 
   describe "#post" do
     let!(:post_request) {
-      stub_request(:post, "example.com/bar")
+      stub_request(:post, repr.href)
     }
 
     before(:each) do
-      repr.related("link1").post("abc")
+      repr.post("abc")
     end
 
     specify("makes request") {
       expect(post_request.with(:body => "abc",
+                                :headers => {'Content-Type' => 'application/hal+json'}))
+        .to have_been_made
+    }
+  end
+
+  describe "#put" do
+    let!(:put_request) {
+      stub_request(:put, repr.href)
+    }
+
+    before(:each) do
+      repr.put("abc")
+    end
+
+    specify("makes request") {
+      expect(put_request.with(:body => "abc",
+                              :headers => {'Content-Type' => 'application/hal+json'}))
+        .to have_been_made
+    }
+  end
+
+  describe "#patch" do
+    let!(:patch_request) {
+      stub_request(:patch, repr.href)
+    }
+
+    before(:each) do
+      repr.patch("abc")
+    end
+
+    specify("makes request") {
+      expect(patch_request.with(:body => "abc",
                                 :headers => {'Content-Type' => 'application/hal+json'}))
         .to have_been_made
     }
