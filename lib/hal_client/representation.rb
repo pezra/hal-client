@@ -83,7 +83,11 @@ class HalClient
 
     # Returns the URL of the resource this representation represents.
     def href
-      @href ||= links.hrefs('self').first
+      @href ||= if has_related? "self"
+                  links.hrefs('self').first
+                else
+                  nil
+                end
     end
 
     # Returns the value of the specified property or representations
@@ -200,7 +204,7 @@ class HalClient
     # Returns a short human readable description of this
     # representation.
     def to_s
-      "#<" + self.class.name + ": " + href + ">"
+      "#<" + self.class.name + ": " + (href || "ANONYMOUS")  + ">"
     end
 
     # Returns the raw json representation of this representation
