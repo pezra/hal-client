@@ -75,6 +75,13 @@ HAL
     subject(:return_val) { repr.to_s }
 
     it { is_expected.to eq "#<HalClient::Representation: http://example.com/foo>" }
+
+    context "anonymous" do
+      let(:repr) {  described_class.new(hal_client: a_client,
+                                        parsed_json: MultiJson.load("{}")) }
+
+      it { is_expected.to eq "#<HalClient::Representation: ANONYMOUS>" }
+    end
   end
 
   specify { expect(repr.property "prop1").to eq 1 }
