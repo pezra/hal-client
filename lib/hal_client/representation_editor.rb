@@ -32,7 +32,7 @@ class HalClient
 
     # Returns the raw json representation of this representation
     def to_json
-      raw.to_json
+      MultiJson.dump(raw)
     end
     alias_method :to_hal, :to_json
 
