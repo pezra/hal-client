@@ -47,6 +47,22 @@ describe HalClient do
       end
     end
 
+    context "explicit authorization helper" do
+      subject(:client) { HalClient.new authorization: ->(_url) { "Bearer hello" } }
+      it "sends specified accept header" do
+        expect(request.with(headers: {'Authorization' => "Bearer hello"})).
+          to have_been_made
+      end
+    end
+
+    context "explicit authorization string" do
+      subject(:client) { HalClient.new authorization: "Bearer hello" }
+      it "sends specified accept header" do
+        expect(request.with(headers: {'Authorization' => "Bearer hello"})).
+          to have_been_made
+      end
+    end
+
     context "other headers" do
       let(:headers) { {"Authorization" => "Bearer f73c04b0970f1deb6005fab53edd1708"} }
       subject(:client) { HalClient.new headers: headers }
