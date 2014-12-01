@@ -24,10 +24,15 @@ class HalClient
   #     prepended to the `Accept` header field of each request.
   #   :content_type - a single content type that should be
   #     prepended to the `Content-Type` header field of each request.
+  #   :authorization - a `#call`able which takes the url being
+  #     requested and returns the authorization header value to use
+  #     for the request or a string which will always be the value of
+  #     the authorization header
   #   :headers - a hash of other headers to send on each request.
   def initialize(options={})
     @default_message_request_headers = HTTP::Headers.new
     @default_entity_request_headers = HTTP::Headers.new
+    @auth_helper = as_callable(options.fetch(:authorization, NullAuthHelper))
 
     default_message_request_headers.set('Accept', options[:accept]) if
       options[:accept]
@@ -63,7 +68,27 @@ class HalClient
   # url - The URL of the resource of interest.
   # headers - custom header fields to use for this request
   def get(url, headers={})
+    headers = auth_headers(url).merge(headers)
     interpret_response client_for_get(override_headers: headers).get(url)
+  end
+
+  class << self
+    protected
+
+    def def_unsafe_request(method)
+      define_method(method) do |url, data, headers={}|
+        headers = auth_headers(url).merge(headers)
+
+        req_body = if data.respond_to? :to_hal
+                 data.to_hal
+               else
+                 data
+               end
+
+        interpret_response client_for_post(override_headers: headers)
+                            .request(method, url, body: req_body)
+      end
+    end
   end
 
   # Post a `Representation` or `String` to the resource identified at `url`.
@@ -71,49 +96,43 @@ class HalClient
   # url - The URL of the resource of interest.
   # data - a `String` or an object that responds to `#to_hal`
   # headers - custom header fields to use for this request
-  def post(url, data, headers={})
-    req_body = if data.respond_to? :to_hal
-                 data.to_hal
-               else
-                 data
-               end
-
-    interpret_response client_for_post(override_headers: headers).post(url, body: req_body)
-  end
+  def_unsafe_request :post
 
   # Put a `Representation` or `String` to the resource identified at `url`.
   #
   # url - The URL of the resource of interest.
   # data - a `String` or an object that responds to `#to_hal`
   # headers - custom header fields to use for this request
-  def put(url, data, headers={})
-    req_body = if data.respond_to? :to_hal
-                 data.to_hal
-               else
-                 data
-               end
-
-    interpret_response client_for_post(override_headers: headers).put(url, body: req_body)
-  end
+  def_unsafe_request :put
 
   # Patch a `Representation` or `String` to the resource identified at `url`.
   #
   # url - The URL of the resource of interest.
   # data - a `String` or an object that responds to `#to_hal`
   # headers - custom header fields to use for this request
-  def patch(url, data, headers={})
-    req_body = if data.respond_to? :to_hal
-                 data.to_hal
-               else
-                 data
-               end
-
-    interpret_response client_for_post(override_headers: headers).patch(url, body: req_body)
-  end
+  def_unsafe_request :patch
 
   protected
 
-  attr_reader :headers
+  attr_reader :headers, :auth_helper
+
+  NullAuthHelper = ->(_url) { nil }
+
+  def as_callable(thing)
+    if thing.respond_to?(:call)
+      thing
+    else
+      ->(*_args) { thing }
+    end
+  end
+
+  def auth_headers(url)
+    if h_val = auth_helper.call(url)
+      {"Authorization" => h_val}
+    else
+      {}
+    end
+  end
 
   def interpret_response(resp)
     case resp.status
