@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/pezra/hal-client.png?branch=master)](https://travis-ci.org/pezra/hal-client)
+![Build Status](https://travis-ci.org/pezra/hal-client.png?branch=master)](https://travis-ci.org/pezra/hal-client)
 [![Code Climate](https://codeclimate.com/github/pezra/hal-client.png)](https://codeclimate.com/github/pezra/hal-client)
 
 # HalClient
@@ -78,7 +78,7 @@ All `HalClient::Representation`s exposed an `#href` attribute which is its ident
 
 HalClient provides a high level abstraction for paged collections encoded using [standard `item`, `next` and `prev` link relations](http://tools.ietf.org/html/rfc6573).
 
-    articles = HalClient::Collection.new(blog)
+    articles = blog.as_enum
     articles.each do |an_article|
       # do something with each article representation
     end

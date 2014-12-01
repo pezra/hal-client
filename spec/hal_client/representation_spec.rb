@@ -215,7 +215,6 @@ HAL
   specify { expect(subject.to_json).to be_equivalent_json_to raw_repr }
   specify { expect(subject.to_hal).to be_equivalent_json_to raw_repr }
 
-
   context "curie links" do
     let(:raw_repr) { <<-HAL }
 { "_links": {
@@ -291,6 +290,31 @@ HAL
         .to raise_error HalClient::InvalidRepresentationError, %r(/_embedded/array-of-atoms) }
 
   end
+
+  specify { expect(repr).to respond_to :as_enum }
+
+  context "collection" do
+    let(:raw_repr) { <<-HAL }
+{ "_links": {
+    "self": { "href": "http://example.com/foo" }
+  }
+  ,"_embedded": {
+    "item": [
+      {"name": "first"}
+      ,{"name": "second"}
+    ]
+  }
+}
+HAL
+
+    specify { expect(repr.as_enum).to a_kind_of Enumerable }
+    specify { expect(repr.as_enum).to have(2).items }
+  end
+
+  context "non-collection" do
+    specify { expect{repr.as_enum}.to raise_error }
+  end
+
   # Background
 
   let(:a_client) { HalClient.new }
