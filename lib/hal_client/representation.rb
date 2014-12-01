@@ -201,6 +201,10 @@ class HalClient
       Array(linked) + Array(embedded).map(&:href)
     end
 
+    def as_enum
+      Collection.new(self)
+    end
+
     # Returns a short human readable description of this
     # representation.
     def to_s
