@@ -30,28 +30,34 @@ class HalClient
         @raw && ! hashish?(@raw)
     end
 
-    # Posts a `Representation` or `String` to this resource.
+    # Posts a `Representation` or `String` to this resource. Causes
+    # this representation to be reloaded the next time it is used.
     #
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#post`
     def post(data, options={})
       @hal_client.post(href, data, options)
+      reset
     end
 
-    # Puts a `Representation` or `String` to this resource.
+    # Puts a `Representation` or `String` to this resource. Causes
+    # this representation to be reloaded the next time it is used.
     #
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#put`
     def put(data, options={})
       @hal_client.put(href, data, options)
+      reset
     end
 
-    # Patchs a `Representation` or `String` to this resource.
+    # Patchs a `Representation` or `String` to this resource. Causes
+    # this representation to be reloaded the next time it is used.
     #
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#patch`
     def patch(data, options={})
       @hal_client.patch(href, data, options)
+      reset
     end
 
     # Returns true if this representation contains the specified
@@ -201,8 +207,20 @@ class HalClient
       Array(linked) + Array(embedded).map(&:href)
     end
 
+    # Returns an Enumerable of the items in this collection resource
+    # if this is an rfc 6573 collection.
+    #
+    # Raises HalClient::NotACollectionError if this is not a
+    # collection resource.
     def as_enum
       Collection.new(self)
+    end
+
+    # Resets this representation such that it will be requested from
+    # the upstream on it's next use.
+    def reset
+      @href = href # make sure we have the href
+      @raw = nil
     end
 
     # Returns a short human readable description of this
