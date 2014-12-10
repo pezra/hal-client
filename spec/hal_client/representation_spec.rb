@@ -24,65 +24,78 @@ HAL
                                        parsed_json: MultiJson.load(raw_repr)) }
 
   describe "#post" do
-    let!(:post_request) {stub_request(:post, repr.href) }
+    let!(:post_request) { stub_request(:post, repr.href).to_return(body: "{}") }
     let!(:reload_request) { stub_request(:get, repr.href).to_return(body: raw_repr) }
 
-    before(:each) do
-      repr.post("abc")
-    end
+    specify { expect(repr.post("abc")).to be_kind_of HalClient::Representation }
 
-    it("makes request") do
-      expect(post_request.with(:body => "abc",
-                               :headers => {
-                                 'Content-Type' => 'application/hal+json'
-                               })
-            )
-        .to have_been_made
-    end
+    describe "after" do
+      before(:each) do
+        repr.post("abc")
+      end
 
-    it("refetches repr afterwards") do
-      repr.property("prop1")
-      expect(reload_request).to have_been_made
+      it("makes request") do
+        expect(post_request.with(:body => "abc",
+                                 :headers => {
+                                   'Content-Type' => 'application/hal+json'
+                                 })
+              )
+          .to have_been_made
+      end
+
+      it("refetches repr afterwards") do
+        repr.property("prop1")
+        expect(reload_request).to have_been_made
+      end
     end
   end
 
   describe "#put" do
-    let!(:put_request) { stub_request(:put, repr.href) }
+    let!(:put_request) { stub_request(:put, repr.href).to_return(body: "{}") }
     let!(:reload_request) { stub_request(:get, repr.href).to_return(body: raw_repr) }
 
-    before(:each) do
-      repr.put("abc")
-    end
+    specify { expect(repr.put("abc")).to be_kind_of HalClient::Representation }
 
-    specify("makes request") do
-      expect(put_request.with(:body => "abc",
-                              :headers => {'Content-Type' => 'application/hal+json'}))
-        .to have_been_made
-    end
+    describe "after" do
+      before(:each) do
+        repr.put("abc")
+      end
 
-    it("refetches repr afterwards") do
-      repr.property("prop1")
-      expect(reload_request).to have_been_made
+      specify("makes request") do
+        expect(put_request.with(:body => "abc",
+                                :headers => {'Content-Type' => 'application/hal+json'}))
+          .to have_been_made
+      end
+
+      it("refetches repr afterwards") do
+        repr.property("prop1")
+        expect(reload_request).to have_been_made
+      end
     end
-end
+  end
 
   describe "#patch" do
-    let!(:patch_request) {stub_request(:patch, repr.href)}
+    let!(:patch_request) { stub_request(:patch, repr.href).to_return(body: "{}") }
     let!(:reload_request) { stub_request(:get, repr.href).to_return(body: raw_repr) }
 
-    before(:each) do
-      repr.patch("abc")
-    end
 
-    specify("makes request") do
-      expect(patch_request.with(:body => "abc",
-                                :headers => {'Content-Type' => 'application/hal+json'}))
-        .to have_been_made
-    end
+    specify { expect(repr.patch("abc")).to be_kind_of HalClient::Representation }
 
-    it("refetches repr afterwards") do
-      repr.property("prop1")
-      expect(reload_request).to have_been_made
+    describe "after" do
+      before(:each) do
+        repr.patch("abc")
+      end
+
+      specify("makes request") do
+        expect(patch_request.with(:body => "abc",
+                                  :headers => {'Content-Type' => 'application/hal+json'}))
+          .to have_been_made
+      end
+
+      it("refetches repr afterwards") do
+        repr.property("prop1")
+        expect(reload_request).to have_been_made
+      end
     end
   end
 

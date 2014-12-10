@@ -36,8 +36,9 @@ class HalClient
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#post`
     def post(data, options={})
-      @hal_client.post(href, data, options)
-      reset
+      @hal_client.post(href, data, options).tap do
+        reset
+      end
     end
 
     # Puts a `Representation` or `String` to this resource. Causes
@@ -46,8 +47,9 @@ class HalClient
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#put`
     def put(data, options={})
-      @hal_client.put(href, data, options)
-      reset
+      @hal_client.put(href, data, options).tap do
+        reset
+      end
     end
 
     # Patchs a `Representation` or `String` to this resource. Causes
@@ -56,8 +58,9 @@ class HalClient
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#patch`
     def patch(data, options={})
-      @hal_client.patch(href, data, options)
-      reset
+      @hal_client.patch(href, data, options).tap do
+        reset
+      end
     end
 
     # Returns true if this representation contains the specified
