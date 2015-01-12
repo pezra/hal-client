@@ -247,7 +247,6 @@ class HalClient
     end
 
     def ==(other)
-      super
       if href
         href == other.href
       else
