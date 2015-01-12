@@ -247,10 +247,12 @@ class HalClient
     end
 
     def ==(other)
-      if href
+      if href && other.respond_to?(:href)
         href == other.href
-      else
+      elsif other.respond_to?(:raw)
         @raw == other.raw
+      else
+        false
       end
     end
     alias :eql? :==

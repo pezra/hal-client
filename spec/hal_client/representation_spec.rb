@@ -133,6 +133,7 @@ HAL
       specify { expect(repr == repr_no_href).to   eq false }
       specify { expect(repr_no_href == repr).to   eq false }
       specify { expect(repr_no_href == repr_no_href).to eq true }
+      specify { expect(repr == Object.new).to eq false }
     end
 
     describe ".eql?" do
@@ -141,6 +142,7 @@ HAL
       specify { expect(repr.eql? repr_no_href).to   eq false }
       specify { expect(repr_no_href.eql? repr).to   eq false }
       specify { expect(repr_no_href.eql? repr_no_href).to eq true }
+      specify { expect(repr.eql? Object.new).to eq false }
     end
 
     describe "hash" do
