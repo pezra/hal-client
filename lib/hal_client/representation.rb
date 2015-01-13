@@ -238,6 +238,25 @@ class HalClient
     end
     alias_method :to_hal, :to_json
 
+    def hash
+      if href
+        href.hash
+      else
+        @raw.hash
+      end
+    end
+
+    def ==(other)
+      if href && other.respond_to?(:href)
+        href == other.href
+      elsif other.respond_to?(:raw)
+        @raw == other.raw
+      else
+        false
+      end
+    end
+    alias :eql? :==
+
     # Internal: Returns parsed json document
     def raw
       if @raw.nil? && @href
@@ -328,6 +347,5 @@ end
     end
 
     def_delegators :links, :namespaces
-
   end
 end

@@ -112,6 +112,47 @@ HAL
     end
   end
 
+  context "equality and hash" do
+    let(:repr_same_href) { described_class.new(hal_client: a_client,
+                                         parsed_json: MultiJson.load(<<-HAL)) }
+    { "_links": { "self": { "href": "http://example.com/foo" } } }
+    HAL
+
+    let(:repr_diff_href) { described_class.new(hal_client: a_client,
+                                         parsed_json: MultiJson.load(<<-HAL)) }
+    { "_links": { "self": { "href": "http://DIFFERENT" } } }
+    HAL
+    let(:repr_no_href) { described_class.new(hal_client: a_client,
+                                         parsed_json: MultiJson.load(<<-HAL)) }
+    { }
+    HAL
+
+    describe "#==" do
+      specify { expect(repr == repr_same_href).to eq true }
+      specify { expect(repr == repr_diff_href).to eq false }
+      specify { expect(repr == repr_no_href).to   eq false }
+      specify { expect(repr_no_href == repr).to   eq false }
+      specify { expect(repr_no_href == repr_no_href).to eq true }
+      specify { expect(repr == Object.new).to eq false }
+    end
+
+    describe ".eql?" do
+      specify { expect(repr.eql? repr_same_href).to eq true }
+      specify { expect(repr.eql? repr_diff_href).to eq false }
+      specify { expect(repr.eql? repr_no_href).to   eq false }
+      specify { expect(repr_no_href.eql? repr).to   eq false }
+      specify { expect(repr_no_href.eql? repr_no_href).to eq true }
+      specify { expect(repr.eql? Object.new).to eq false }
+    end
+
+    describe "hash" do
+      specify{ expect(repr.hash).to eq repr.href.hash }
+      specify{ expect(repr_no_href.hash).to eq repr_no_href.raw.hash }
+    end
+  end
+
+
+
   specify { expect(repr.property "prop1").to eq 1 }
   specify { expect{repr.property "nonexistent-prop"}.to raise_exception KeyError }
 
