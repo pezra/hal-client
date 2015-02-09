@@ -29,10 +29,12 @@ class HalClient
   #     for the request or a string which will always be the value of
   #     the authorization header
   #   :headers - a hash of other headers to send on each request.
+  #   :base_client - An HTTP::Client object to use.
   def initialize(options={})
     @default_message_request_headers = HTTP::Headers.new
     @default_entity_request_headers = HTTP::Headers.new
     @auth_helper = as_callable(options.fetch(:authorization, NullAuthHelper))
+    @base_client ||= options[:base_client]
 
     default_message_request_headers.set('Accept', options[:accept]) if
       options[:accept]
@@ -70,6 +72,9 @@ class HalClient
   def get(url, headers={})
     headers = auth_headers(url).merge(headers)
     interpret_response client_for_get(override_headers: headers).get(url)
+
+  rescue HttpError => e
+    fail e.class.new("GET <#{url}> failed with code #{e.response.status}", e.response)
   end
 
   class << self
@@ -80,13 +85,18 @@ class HalClient
         headers = auth_headers(url).merge(headers)
 
         req_body = if data.respond_to? :to_hal
-                 data.to_hal
-               else
-                 data
-               end
+                     data.to_hal
+                   else
+                     data
+                   end
 
-        interpret_response client_for_post(override_headers: headers)
-                            .request(method, url, body: req_body)
+        begin
+          interpret_response client_for_post(override_headers: headers)
+                              .request(method, url, body: req_body)
+
+        rescue HttpError => e
+          fail e.class.new("#{method.to_s.upcase} <#{url}> failed with code #{e.response.status}", e.response)
+        end
       end
     end
   end
