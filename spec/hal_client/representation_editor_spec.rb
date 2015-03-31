@@ -82,6 +82,18 @@ RSpec.describe HalClient::RepresentationEditor do
 
   end
 
+  describe "#add_property" do
+    it "adds brand new property" do
+      expect(subject.add_property("name", "new-name"))
+        .to have_property("name", "new-name")
+    end
+
+    it "overwrites any previous value in the property" do
+      expect(subject).to have_property("age", 10)
+      expect(subject.add_property("age", 20)).to have_property("age", 20)
+    end
+  end
+
   describe "#add_link" do
     it "adds brand new link rel" do
       expect(subject.add_link("related", "http://example.com/third"))
@@ -108,7 +120,8 @@ RSpec.describe HalClient::RepresentationEditor do
                  .new(parsed_json: MultiJson.load(raw_hal)) }
 
   let(:raw_hal) { <<-HAL }
-    { "_links": {
+    { "age": 10
+      ,"_links": {
         "self"  : { "href": "http://example.com/a_repr" }
         ,"up"   : [{ "href": "http://example.com/c1" },
                   { "href": "http://example.com/c2" }]
@@ -149,6 +162,13 @@ RSpec.describe HalClient::RepresentationEditor do
 
       [parsed["_links"].fetch(expected_rel, [])].flatten
         .any?{|l| expected_target === l }
+    end
+  end
+
+  matcher :have_property do |key, value|
+    match do |actual_json|
+      parsed = MultiJson.load(actual_json.to_hal)
+      expect(parsed[key]).to eq value
     end
   end
 
