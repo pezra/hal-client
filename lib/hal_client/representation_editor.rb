@@ -90,7 +90,7 @@ class HalClient
     #   :templated - is this link templated? Default: false
     def add_link(rel, target, opts={})
       templated = opts.fetch(:templated, false)
-      
+
       link_obj = { "href" => target.to_s }
       link_obj = link_obj.merge("templated" => true) if templated
 
@@ -98,6 +98,15 @@ class HalClient
       updated_links_section =  raw.fetch("_links", {}).merge(rel => with_new_link)
 
       self.class.new(orig_repr, raw.merge("_links" => updated_links_section))
+    end
+
+    # Returns a RepresentationEditor exactly like this one except that
+    # is has an new or overwritten property value
+    #
+    # key - The name of the property
+    # value - Value to place in the property
+    def set_property(key, value)
+      self.class.new(orig_repr, raw.merge(key => value))
     end
 
     protected
