@@ -82,15 +82,15 @@ RSpec.describe HalClient::RepresentationEditor do
 
   end
 
-  describe "#add_property" do
+  describe "#set_property" do
     it "adds brand new property" do
-      expect(subject.add_property("name", "new-name"))
+      expect(subject.set_property("name", "new-name"))
         .to have_property("name", "new-name")
     end
 
     it "overwrites any previous value in the property" do
       expect(subject).to have_property("age", 10)
-      expect(subject.add_property("age", 20)).to have_property("age", 20)
+      expect(subject.set_property("age", 20)).to have_property("age", 20)
     end
   end
 

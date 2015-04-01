@@ -105,7 +105,7 @@ class HalClient
     #
     # key - The name of the property
     # value - Value to place in the property
-    def add_property(key, value)
+    def set_property(key, value)
       self.class.new(orig_repr, raw.merge(key => value))
     end
 
