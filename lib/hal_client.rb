@@ -147,12 +147,18 @@ class HalClient
   def interpret_response(resp)
     case resp.status
     when 200...300
+      location = resp.headers["Location"]
+
       begin
-        Representation.new hal_client: self, parsed_json: MultiJson.load(resp.to_s)
+        Representation.new(hal_client: self, parsed_json: MultiJson.load(resp.to_s),
+                           href: location)
       rescue MultiJson::ParseError, InvalidRepresentationError => e
-        if resp.headers["Location"]
-          Representation.new hal_client: self, href: resp.headers["Location"]
+        if location
+          # response doesn't have a HAL body but we know what resource
+          # was created so we can be helpful.
+          Representation.new(hal_client: self, href: location)
         else
+          # nothing useful to be done
           resp
         end
       end
