@@ -128,7 +128,7 @@ doc.put(improved_doc)                                                   # save c
 
 ```
 
-This removes "John Plagerist" from the documents list of authors and then performs an HTTP PUT request with the updated document.
+This removes the obsolete link to "John Doe" from the documents list of authors and replaces it with the correct link then performs an HTTP PUT request with the updated document.
 
 ### Custom media types
 
