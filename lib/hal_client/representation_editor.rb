@@ -43,9 +43,14 @@ class HalClient
     # blk - When given only linked and embedded resource for whom
     #   the block returns true will be rejected.
     #
+    # Options
+    #
+    #   ignore - one or more categories of things to ignore. Valid
+    #     values are: :broken_links. Default: []
+    #
     # Yields Representation of the target for each link/embedded.
-    def reject_related(rel, &blk)
-      reject_links(rel, &blk).reject_embedded(rel, &blk)
+    def reject_related(rel, ignore: [], &blk)
+      reject_links(rel, ignore: ignore, &blk).reject_embedded(rel, ignore: ignore, &blk)
     end
 
     # Returns a RepresentationEditor for a representation like the
@@ -55,13 +60,18 @@ class HalClient
     # blk - When given only links to resources for whom
     #   the block returns true will be rejected.
     #
+    # Options
+    #
+    #   ignore - one or more categories of things to ignore. Valid
+    #     values are: :broken_links. Default: []
+    #
     # Yields Representation of the target for each link.
-    def reject_links(rel, &blk)
+    def reject_links(rel, ignore: [], &blk)
       reject_from_section("_links",
                           rel,
                           ->(l) {Representation.new(href: l["href"],
                                                     hal_client: hal_client)},
-                          blk)
+                          ignoring(ignore, blk))
     end
 
     # Returns a RepresentationEditor for a representation like the
@@ -71,13 +81,18 @@ class HalClient
     # blk - When given only embedded resources for whom
     #   the block returns true will be rejected.
     #
+    # Options
+    #
+    #   ignore - one or more categories of things to ignore. Valid
+    #     values are: :broken_links. Default: []
+    #
     # Yields Representation of the target for each embedded.
-    def reject_embedded(rel, &blk)
+    def reject_embedded(rel, ignore: [], &blk)
       reject_from_section("_embedded",
                           rel,
                           ->(e) {Representation.new(parsed_json: e,
                                                     hal_client: hal_client)},
-                          blk)
+                          ignoring(ignore, blk))
     end
 
     # Returns a RepresentationEditor exactly like this one except that
@@ -142,6 +157,22 @@ class HalClient
                 end
 
       self.class.new(orig_repr, raw.merge(name => new_sec))
+    end
+
+    def ignoring(criteria, filter)
+      Array(criteria)
+        .reduce(filter) {|f, c|
+          case c
+          when :broken_links
+            ->(*args) { begin
+                          f.call(*args)
+                        rescue HalClient::HttpClientError
+                          false
+                        end }
+          else
+            fail ArgumentError, "Unsupported ignore criteria: #{c}"
+          end
+        }
     end
   end
 end

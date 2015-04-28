@@ -26,6 +26,12 @@ RSpec.describe HalClient::RepresentationEditor do
     specify { expect(subject.reject_links("absent-rel")).to be_equivalent_json_to raw_hal }
     specify { expect(subject.reject_links("about") {|repr| %r|/another$| === repr.href })
               .not_to have_link "about" }
+
+    specify { expect{subject.reject_links("broken-link") {|repr| repr[:t] }}
+                .to raise_error HalClient::HttpClientError }
+    specify { expect{subject.reject_links("broken-link", ignore: :broken_links) { |repr|
+                       repr[:t] }}
+                .not_to raise_error }
   end
 
   describe "#reject_embedded" do
@@ -74,12 +80,16 @@ RSpec.describe HalClient::RepresentationEditor do
 
       expect(altered).to have_link("replies", hash_including("value" => "-1"))
                           .or(have_embedded("replies", hash_including("value" => "-1")))
-
     end
 
     specify { expect(subject.reject_related("absent-rel"))
               .to be_equivalent_json_to raw_hal }
 
+    specify { expect{subject.reject_related("broken-link") {|repr| repr[:t] }}
+              .to raise_error HalClient::HttpClientError }
+    specify { expect{subject.reject_related("broken-link", ignore: :broken_links) { |repr|
+                       repr[:t] }}
+              .not_to raise_error }
   end
 
   describe "#set_property" do
@@ -116,8 +126,10 @@ RSpec.describe HalClient::RepresentationEditor do
 
   # Background
 
+  let(:hal_client) { HalClient.new }
   let(:a_repr) { HalClient::Representation
-                 .new(parsed_json: MultiJson.load(raw_hal)) }
+                 .new(parsed_json: MultiJson.load(raw_hal),
+                      hal_client: hal_client) }
 
   let(:raw_hal) { <<-HAL }
     { "age": 10
@@ -126,6 +138,7 @@ RSpec.describe HalClient::RepresentationEditor do
         ,"up"   : [{ "href": "http://example.com/c1" },
                   { "href": "http://example.com/c2" }]
         ,"about": { "href": "http://example.com/another" }
+        ,"broken-link": { "href": "http://example.com/missing" }
       }
       ,"_embedded": {
         "replies": [
@@ -135,6 +148,9 @@ RSpec.describe HalClient::RepresentationEditor do
        }
     }
   HAL
+
+  let!(:missing_resource_req) { stub_request(:get, "http://example.com/missing")
+                                .to_return(status: 404) }
 
   ANYTHING = ->(_) { true }
 
