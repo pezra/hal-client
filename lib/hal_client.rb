@@ -122,6 +122,13 @@ class HalClient
   # headers - custom header fields to use for this request
   def_unsafe_request :patch
 
+  # Delete a `Representation` or `String` to the resource identified at `url`.
+  #
+  # url - The URL of the resource of interest.
+  # data - a `String` or an object that responds to `#to_hal`.
+  # headers - custom header fields to use for this request
+  def_unsafe_request :delete
+
   protected
 
   attr_reader :headers, :auth_helper
