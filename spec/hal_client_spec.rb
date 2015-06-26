@@ -240,6 +240,22 @@ describe HalClient do
     end
   end
 
+  describe ".delete(<url>)" do
+    subject { HalClient.delete "http://example.com/foo" }
+
+    it "returns a HalClient::Representation" do
+      expect(subject).to be_kind_of HalClient::Representation
+    end
+  end
+
+  describe "#delete(<url>)" do
+    subject { HalClient.new.delete "http://example.com/foo" }
+
+    it "returns a HalClient::Representation" do
+      expect(subject).to be_kind_of HalClient::Representation
+    end
+  end
+
   context "get request redirection" do
     let!(:request) { stub_request(:get, "http://example.com/foo").
       to_return(status: 301, headers: { 'Location' => "http://example.com/bar" } ) }
@@ -263,6 +279,9 @@ describe HalClient do
 
   let!(:post_request) { stub_request(:post, "http://example.com/foo").
     with(:body => post_data).
+    to_return body: "{}" }
+
+  let!(:delete_request) { stub_request(:delete, "http://example.com/foo").
     to_return body: "{}" }
 
   let!(:request) { stub_request(:get, "http://example.com/foo").

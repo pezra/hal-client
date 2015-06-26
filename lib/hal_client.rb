@@ -127,7 +127,22 @@ class HalClient
   # url - The URL of the resource of interest.
   # data - a `String` or an object that responds to `#to_hal`.
   # headers - custom header fields to use for this request
-  def_unsafe_request :delete
+  def delete(url, headers={})
+    headers = auth_headers(url).merge(headers)
+
+    begin
+      interpret_response client_for_post(override_headers: headers)
+                          .request(:delete, url)
+    rescue HttpError => e
+      fail e.class.new("#{method.to_s.upcase} <#{url}> failed with code #{e.response.status}", e.response)
+    end
+  end
+
+  class << self
+    def delete(url, headers={})
+      new.delete(url, headers)
+    end
+  end
 
   protected
 
