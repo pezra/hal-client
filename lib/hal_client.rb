@@ -125,7 +125,6 @@ class HalClient
   # Delete a `Representation` or `String` to the resource identified at `url`.
   #
   # url - The URL of the resource of interest.
-  # data - a `String` or an object that responds to `#to_hal`.
   # headers - custom header fields to use for this request
   def delete(url, headers={})
     headers = auth_headers(url).merge(headers)
