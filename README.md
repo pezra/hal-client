@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/pezra/hal-client.png?branch=master)](https://travis-ci.org/pezra/hal-client)
 [![Code Climate](https://codeclimate.com/github/pezra/hal-client.png)](https://codeclimate.com/github/pezra/hal-client)
+[![Gem Version](https://badge.fury.io/rb/hal-client.svg)](http://badge.fury.io/rb/hal-client)
 
 # HalClient
 
