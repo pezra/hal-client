@@ -133,7 +133,7 @@ class HalClient
       interpret_response client_for_post(override_headers: headers)
                           .request(:delete, url)
     rescue HttpError => e
-      fail e.class.new("#{method.to_s.upcase} <#{url}> failed with code #{e.response.status}", e.response)
+      fail e.class.new("DELETE <#{url}> failed with code #{e.response.status}", e.response)
     end
   end
 
