@@ -219,6 +219,15 @@ class HalClient
       Collection.new(self)
     end
 
+    # Returns an Enumerator of the items in the collection resource
+    # if this is an rfc 6573 collection.
+    #
+    # Raises HalClient::NotACollectionError if this is not a
+    # collection resource.
+    def to_enum(method=:each, *args, &blk)
+      as_enum.to_enum(method, *args, &blk)
+    end
+
     # Resets this representation such that it will be requested from
     # the upstream on it's next use.
     def reset
