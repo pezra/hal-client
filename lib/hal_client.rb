@@ -86,6 +86,8 @@ class HalClient
 
         req_body = if data.respond_to? :to_hal
                      data.to_hal
+                   elsif data.is_a? Hash
+                     data.to_json
                    else
                      data
                    end
@@ -101,24 +103,24 @@ class HalClient
     end
   end
 
-  # Post a `Representation` or `String` to the resource identified at `url`.
+  # Post a `Representation`, `String` or `Hash` to the resource identified at `url`.
   #
   # url - The URL of the resource of interest.
-  # data - a `String` or an object that responds to `#to_hal`
+  # data - a `String`, a `Hash` or an object that responds to `#to_hal`
   # headers - custom header fields to use for this request
   def_unsafe_request :post
 
-  # Put a `Representation` or `String` to the resource identified at `url`.
+  # Put a `Representation`, `String` or `Hash` to the resource identified at `url`.
   #
   # url - The URL of the resource of interest.
-  # data - a `String` or an object that responds to `#to_hal`
+  # data - a `String`, a `Hash` or an object that responds to `#to_hal`
   # headers - custom header fields to use for this request
   def_unsafe_request :put
 
-  # Patch a `Representation` or `String` to the resource identified at `url`.
+  # Patch a `Representation`, `String` or `Hash` to the resource identified at `url`.
   #
   # url - The URL of the resource of interest.
-  # data - a `String` or an object that responds to `#to_hal`
+  # data - a `String`, a `Hash` or an object that responds to `#to_hal`
   # headers - custom header fields to use for this request
   def_unsafe_request :patch
 

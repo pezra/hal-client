@@ -104,7 +104,7 @@ HalClient supports PUT/POST/PATCH requests to remote resources via it's `#put`, 
     blog.patch(diffs_of_article_as_hal_json_str)
     #=> #<Representation: http://blog.me>
 
-The first argument to `#put`, `#post` and `#patch` may be a `String` or any object that responds to `#to_hal`. Additional options may be passed to change the content type of the post, etc.
+The first argument to `#put`, `#post` and `#patch` may be a `String`, a `Hash` or any object that responds to `#to_hal`. Additional options may be passed to change the content type of the post, etc.
 
 ### PUT requests
 
