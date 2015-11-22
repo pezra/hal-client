@@ -11,6 +11,10 @@ class HalClient
   class Representation
     extend Forwardable
 
+    # Collection of reserved properties
+    # https://tools.ietf.org/html/draft-kelly-json-hal-07#section-4.1
+    RESERVED_PROPERTIES = ['_links', '_embedded'].freeze
+
     # Create a new Representation
     #
     # options - name parameters
@@ -88,6 +92,13 @@ class HalClient
       default_proc ||= ->(_){ default} if default != MISSING
 
       raw.fetch(name.to_s, &default_proc)
+    end
+
+    # Returns a Hash including the key-value pairs of all the properties
+    #   in the resource. It does not include HAL's reserved
+    #   properties (`_links` and `_embedded`).
+    def properties
+      raw.reject { |k, _| RESERVED_PROPERTIES.include? k }
     end
 
     # Returns the URL of the resource this representation represents.

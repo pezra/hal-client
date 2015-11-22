@@ -5,6 +5,7 @@ require "hal_client/representation"
 describe HalClient::Representation do
   let(:raw_repr) { <<-HAL }
 { "prop1": 1
+  ,"prop2": 2
   ,"_links": {
     "self": { "href": "http://example.com/foo" }
     ,"link1": { "href": "http://example.com/bar" }
@@ -161,6 +162,9 @@ HAL
   specify { expect(repr.property? "nonexistent-prop").to be false }
   specify { expect(repr.has_property? "nonexistent-prop").to be false }
 
+  specify { expect(repr.properties).to include("prop1" => 1, "prop2" => 2) }
+  specify { expect(repr.properties).to_not include("_links" => 1,
+                                                   "_embedded" => 2) }
 
   specify { expect(subject.href).to eq "http://example.com/foo" }
 

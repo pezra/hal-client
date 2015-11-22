@@ -14,10 +14,15 @@ The first step in using a HAL based API is getting a representation of one of it
     blog = HalClient.get("http://blog.me/")
     # => #<Representation: http://blog.me/>
 
-`HalClient::Representation`s expose a `#property` method to retrieve properties from the HAL document.
+`HalClient::Representation`s expose a `#property` method to retrieve a single property from the HAL document.
 
     blog.property('title')
     #=> "Some Person's Blog"
+
+They also expose a `#properties` method to retrieve all the properties from the document, as a `Hash`.
+
+    blog.properties
+    #=> {"title"=>"Some Person's Blog", "description"=>"Some description"}
 
 ### Link navigation
 
