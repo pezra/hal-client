@@ -84,12 +84,12 @@ All `HalClient::Representation`s exposed an `#href` attribute which is its ident
 
 HalClient provides a high level abstraction for paged collections encoded using [standard `item`, `next` and `prev` link relations](http://tools.ietf.org/html/rfc6573).
 
-    articles = blog.as_enum
+    articles = blog.to_enum
     articles.each do |an_article|
       # do something with each article representation
     end
 
-If the collection is paged this will navigate to the next page after yielding all the items on the current page. `HalClient::Collection` is `Enumerable` so all your favorite collection methods are available.
+If the collection is paged this will navigate to the next page after yielding all the items on the current page. The return is an `Enumerable` so all your favorite collection methods are available.
 
 ### PUT/POST/PATCH requests
 

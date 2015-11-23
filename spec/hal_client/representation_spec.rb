@@ -365,6 +365,7 @@ HAL
   end
 
   specify { expect(repr).to respond_to :as_enum }
+  specify { expect(repr).to respond_to :to_enum }
 
   context "collection" do
     let(:raw_repr) { <<-HAL }
@@ -382,10 +383,15 @@ HAL
 
     specify { expect(repr.as_enum).to a_kind_of Enumerable }
     specify { expect(repr.as_enum).to have(2).items }
+
+    specify { expect( repr.to_enum ).to be_kind_of Enumerator }
+    specify { expect( repr.to_enum(:each) ).to be_kind_of Enumerator }
+    specify { expect( repr.to_enum ).to have(2).items }
   end
 
   context "non-collection" do
     specify { expect{repr.as_enum}.to raise_error }
+    specify { expect{repr.to_enum}.to raise_error }
   end
 
   # Background
