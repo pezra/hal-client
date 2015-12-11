@@ -3,6 +3,34 @@ require_relative "../spec_helper"
 require 'hal_client/collection'
 
 describe HalClient::Collection do
+  # BACKGROUND
+
+  shared_context "multi-item, multi-page" do
+    subject(:collection) { described_class.new(first_page) }
+    let!(:second_page_req) { stub_request(:get, second_page.href)
+                             .to_return body: second_page.to_json  }
+
+    let(:first_page_href) { "http://example.com/p1" }
+    let(:first_page) { collection_page(next_href: second_page_href,
+                                       self_href: first_page_href,
+                                       items: ["foo", "bar"]) }
+
+    let(:second_page_href) { "http://example.com/p2" }
+    let(:second_page) { collection_page(items: ["baz"],
+                                        self_href: second_page_href,
+                                        prev_href: first_page_href) }
+
+  end
+
+  shared_context "multi-item, single page" do
+    subject(:collection) { described_class.new(only_page) }
+
+    let(:only_page) { collection_page(self_href: "http://example.com/p1",
+                                       items: ["foo", "bar"]) }
+  end
+
+  # END OF BACKGROUND
+
   describe "creation" do
     subject { described_class }
 
@@ -25,44 +53,46 @@ describe HalClient::Collection do
     let(:non_first_page) { collection_page(prev_href: "http://example.com/p1") }
   end
 
-  describe "multi-item, multi-page" do
-    subject(:collection) { described_class.new(first_page) }
-    let!(:second_page_req) { stub_request(:get, second_page.href)
-        .to_return body: second_page.to_json  }
+  describe "#each" do
+    context do
+      include_context "multi-item, multi-page"
 
-    it "fetches all the pages when iterating" do
-      collection.each do |it| end
+      it "fetches all the pages when iterating" do
+        collection.each do |it| end
 
-      expect(a_request(:get, second_page.href)).to have_been_made
+        expect(a_request(:get, second_page.href)).to have_been_made
+      end
+
+      it "yields all the items" do
+        yielded = collection.map { |it| it.href }
+        expect(yielded).to eq ["foo", "bar", "baz"]
+      end
+
     end
-
-    it "iteration yields all the items" do
-      yielded = collection.map { |it| it.href }
-      expect(yielded).to eq ["foo", "bar", "baz"]
-    end
-
-    specify { expect { collection.count }.to raise_exception }
-
-
-    let(:first_page_href) { "http://example.com/p1" }
-    let(:first_page) { collection_page(next_href: second_page_href,
-                                       self_href: first_page_href,
-                                       items: ["foo", "bar"]) }
-
-    let(:second_page_href) { "http://example.com/p2" }
-    let(:second_page) { collection_page(items: ["baz"],
-                                        self_href: second_page_href,
-                                        prev_href: first_page_href) }
   end
 
-  describe "multi-item, single page" do
-    subject(:collection) { described_class.new(only_page) }
+  describe "#count" do
+    context do
+      include_context "multi-item, single page"
 
-    specify { expect(collection.count).to eq 2 }
+      specify { expect(collection.count).to eq 2 }
+    end
 
-    let(:only_page) { collection_page(self_href: "http://example.com/p1",
-                                       items: ["foo", "bar"]) }
+    context do
+      include_context "multi-item, multi-page"
+
+      specify { expect { collection.count }.to raise_exception }
+    end
   end
+
+  describe "#sample" do
+    include_context "multi-item, multi-page"
+
+    specify { expect( collection.sample ).to be }
+    specify { expect( collection.sample ).to be_kind_of HalClient::Representation }
+  end
+
+  # BACKGROUND
 
   let(:hal_client) { HalClient.new }
 
