@@ -52,7 +52,7 @@ class HalClient
       end
     end
 
-    # Returns one or more randomly selected item from the first page
+    # Returns one or more randomly selected items from the first page
     # of the collection.
     #
     # count - number of items to return. If specified return type will

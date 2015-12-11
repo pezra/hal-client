@@ -11,7 +11,7 @@ class HalClient
       @reprs = reprs
     end
 
-    def_delegators :reprs, :each, :count, :empty?, :any?
+    def_delegators :reprs, :each, :count, :empty?, :any?, :sample
 
     # Returns representations of resources related via the specified
     #   link rel or the specified default value.
