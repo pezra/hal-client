@@ -10,7 +10,13 @@ describe HalClient::LinksSection, "namespaces embedded" do
   specify { expect(section.hrefs(fully_qualified_first_rel))
     .to contain_exactly "http://example.com/foo" }
 
+  specify { expect(section.hrefs("ns1:first"))
+    .to contain_exactly "http://example.com/foo" }
+
   specify { expect(section.hrefs(fully_qualified_second_rel))
+            .to contain_exactly "http://example.com/bar", "http://example.com/baz" }
+  
+  specify { expect(section.hrefs("ns2:second"))
     .to contain_exactly "http://example.com/bar", "http://example.com/baz" }
 
   specify { expect(section.hrefs("search"))

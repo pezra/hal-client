@@ -7,7 +7,7 @@ class HalClient
     def initialize(section, namespaces=nil)
       @namespaces = namespaces || CurieResolver.new(section.fetch("curies"){[]})
 
-      @section = fully_qualified section
+      @section = section.merge(fully_qualified(section))
     end
 
     attr_reader :namespaces
@@ -56,7 +56,7 @@ class HalClient
     rescue KeyError
       fail HalClient::InvalidRepresentationError
     end
-    
+
     def fully_qualified(relations_section)
       Hash[relations_section.map {|rel, link_info|
         [(namespaces.resolve rel), link_info]
