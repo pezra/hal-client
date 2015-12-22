@@ -220,6 +220,19 @@ describe HalClient do
         expect(return_val.code.to_s).to match(/^2../)
       end
     end
+
+    context "body as a Hash" do
+      before do return_val end
+      let(:post_data) { {example: "foo"} }
+
+      let(:post_request) { stub_request(:post, "http://example.com/foo").
+        with(:body => post_data.to_json).
+        to_return body: "{}" }
+
+      it "properly parses the request body" do
+        expect(post_request).to have_been_made
+      end
+    end
   end
 
   describe ".post(<url>)" do
