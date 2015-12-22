@@ -4,11 +4,13 @@ class HalClient
   class LinksSection
     UNSET = Object.new
 
-    def initialize(section, base_url: )
+    # section - json hash for the links section
+    # base_url - base URL with which to resolve relative URLs
+    def initialize(section, opts={} )
       @namespaces = CurieResolver.new(section.fetch("curies"){[]})
 
       @section = section.merge(fully_qualified(section))
-      @base_url = base_url
+      @base_url = opts.fetch(:base_url) { raise ArgumentError, "base_url must be specified" }
     end
 
     attr_reader :namespaces

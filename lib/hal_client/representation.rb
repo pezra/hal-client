@@ -297,7 +297,7 @@ class HalClient
 
     def links
       @links ||= LinksSection.new((raw.fetch("_links"){{}}),
-                                  base_url: Addressable::URI.parse(href))
+                                  base_url: Addressable::URI.parse(href || ""))
     end
 
     def embedded_section
