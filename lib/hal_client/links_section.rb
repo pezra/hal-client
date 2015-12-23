@@ -4,10 +4,13 @@ class HalClient
   class LinksSection
     UNSET = Object.new
 
-    def initialize(section, namespaces=nil)
-      @namespaces = namespaces || CurieResolver.new(section.fetch("curies"){[]})
+    # section - json hash for the links section
+    # base_url - base URL with which to resolve relative URLs
+    def initialize(section, opts={} )
+      @namespaces = CurieResolver.new(section.fetch("curies"){[]})
 
       @section = section.merge(fully_qualified(section))
+      @base_url = opts.fetch(:base_url) { raise ArgumentError, "base_url must be specified" }
     end
 
     attr_reader :namespaces
@@ -39,18 +42,18 @@ class HalClient
 
     protected
 
-    attr_reader :section
+    attr_reader :section, :base_url
 
     def resolve_to_url(link)
       (fail HalClient::InvalidRepresentationError) unless link.respond_to? :fetch
 
-      url = link.fetch("href")
+      url = base_url + link.fetch("href")
       is_templated = link.fetch("templated", false)
 
       if is_templated
-        Addressable::Template.new(url)
+        Addressable::Template.new(url.to_s)
       else
-        url
+        url.to_s
       end
 
     rescue KeyError

@@ -103,11 +103,10 @@ class HalClient
 
     # Returns the URL of the resource this representation represents.
     def href
-      @href ||= if has_related? "self"
-                  links.hrefs('self').first
-                else
-                  nil
-                end
+      @href ||= raw
+              .fetch("_links",{})
+              .fetch("self",{})
+              .fetch("href",nil)
     end
 
     # Returns the value of the specified property or representations
@@ -297,11 +296,14 @@ class HalClient
 
 
     def links
-      @links ||= LinksSection.new raw.fetch("_links"){{}}
+      @links ||= LinksSection.new((raw.fetch("_links"){{}}),
+                                  base_url: Addressable::URI.parse(href || ""))
     end
 
     def embedded_section
-      @embedded_section ||= fully_qualified raw.fetch("_embedded", {})
+      embedded = raw.fetch("_embedded", {})
+
+      @embedded_section ||= embedded.merge fully_qualified(embedded)
     end
 
     def embedded(link_rel, &default_proc)

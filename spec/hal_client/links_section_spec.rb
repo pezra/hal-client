@@ -2,10 +2,16 @@ require "spec_helper"
 require 'hal-client'
 
 describe HalClient::LinksSection, "namespaces embedded" do
-  subject(:section) { described_class.new(raw_section) }
+  subject(:section) {
+    described_class.new(raw_section,
+                        base_url: Addressable::URI.parse("http://example.com/foo"))
+  }
 
   specify { expect(section.hrefs("up"))
     .to contain_exactly "http://example.com/parent" }
+
+  specify { expect(section.hrefs("next"))
+    .to contain_exactly "http://example.com/foo?p=2" }
 
   specify { expect(section.hrefs(fully_qualified_first_rel))
     .to contain_exactly "http://example.com/foo" }
@@ -39,7 +45,8 @@ describe HalClient::LinksSection, "namespaces embedded" do
       "search" => {"href" => "http://example.com/s{?q}", "templated" => true },
       "ns1:first" => {"href" => "http://example.com/foo"},
       "ns2:second" => [{"href" => "http://example.com/bar"},
-                       {"href" => "http://example.com/baz"}]
+                       {"href" => "http://example.com/baz"}],
+      "next" => {"href" =>  "/foo?p=2"}
     } }
 
   matcher :all do |expected|
@@ -50,7 +57,10 @@ describe HalClient::LinksSection, "namespaces embedded" do
 end
 
 describe HalClient::LinksSection, "invalid" do
-  subject(:section) { described_class.new(raw_section) }
+  subject(:section) {
+    described_class.new(raw_section,
+                        base_url: Addressable::URI.parse("http://example.com/"))
+  }
 
   specify { expect{section.hrefs("bareurl")}
       .to raise_error HalClient::InvalidRepresentationError }
