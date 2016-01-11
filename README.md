@@ -9,7 +9,7 @@ An easy to use client interface for REST APIs that use [HAL](http://stateless.co
 Usage
 -----
 
-The first step in using a HAL based API is getting a representation of one of its entry point. The simplest way to do this is using the `get` class method of `HalClient`.
+The first step in using a HAL based API is getting a representation of one of its entry points. The simplest way to do this is using the `get` class method of `HalClient`.
 
     blog = HalClient.get("http://blog.me/")
     # => #<Representation: http://blog.me/>
@@ -39,7 +39,7 @@ In the example above `item` is the link rel. The `#related` method extracts embe
 
 #### Request evaluation order
 
-If the `author` relationship was a regular link (that is, not embedded) in the above example the HTTP GET to retrieve Bob's representation from the server does not happen until the `#property` method is called. This lazy dereferencing allows for working with efficiently with larger relationship sets.
+If the `author` relationship was a regular link (that is, not embedded) in the above example the HTTP GET to retrieve Bob's representation from the server does not happen until the `#property` method is called. This lazy dereferencing allows for working more efficiently with larger relationship sets.
 
 #### CURIEs
 
