@@ -177,6 +177,18 @@ class HalClient
       RepresentationSet.new (Array(embedded) + Array(linked))
     end
 
+    def all_links
+      result = Set.new
+
+      embedded_entries = flatten_section(raw.fetch("_embedded", {}))
+      embedded_entries.map { |entry| result.add?(link_from_embedded_entry(entry)) }
+
+      link_entries = flatten_section(raw.fetch("_links", {}).reject {|k| k == 'self'})
+      link_entries.map { |entry| result.add?(link_from_link_entry(entry)) }
+
+      result
+    end
+
     # Returns urls of resources related via the specified
     #   link rel or the specified default value.
     #
@@ -294,6 +306,31 @@ class HalClient
 
     MISSING = Object.new
 
+    def flatten_section(section_hash)
+      result = Array.new
+
+      section_hash.each_pair do |rel, rel_data|
+        if rel_data.is_a?(Array)
+          rel_data.each do |single_item|
+            result << { rel: rel, data: single_item }
+          end
+        elsif rel_data.is_a?(Hash)
+          result << { rel: rel, data: rel_data };
+        end
+      end
+
+      result
+    end
+
+    def link_from_link_entry(hash_entry)
+      repr = Representation.new(hal_client: hal_client, href: hash_entry[:data]['href'])
+      Link.new(rel: hash_entry[:rel], target: repr)
+    end
+
+    def link_from_embedded_entry(hash_entry)
+      repr = Representation.new(hal_client: hal_client, parsed_json: hash_entry[:data])
+      Link.new(rel: hash_entry[:rel], target: repr)
+    end
 
     def links
       @links ||= LinksSection.new((raw.fetch("_links"){{}}),

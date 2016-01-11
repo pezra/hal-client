@@ -13,10 +13,15 @@ describe HalClient::Representation do
                 ,"templated": true }
     ,"link3": [{ "href": "http://example.com/link3-a" }
                ,{ "href": "http://example.com/link3-b" }]
+    ,"dup": { "href": "http://example.com/dup" }
   }
   ,"_embedded": {
     "embed1": {
       "_links": { "self": { "href": "http://example.com/baz" }}
+    }
+    ,"dup": {
+      "dupProperty": "foo"
+      ,"_links": { "self": { "href": "http://example.com/dup" }}
     }
   }
 }
@@ -264,6 +269,20 @@ HAL
     end
   end
 
+  describe "#all_links" do
+    subject { repr.all_links }
+
+    specify { expect(subject).to include(link1_link) }
+    specify { expect(subject).to_not include(link2_link) }
+
+    specify { expect(subject).to include(templated_link_link) }
+
+    specify { expect(subject).to include(link3a_link) }
+    specify { expect(subject).to include(link3b_link) }
+
+    specify { expect(subject.any? { |item| item.target['dupProperty'] == 'foo' }).to be true }
+  end
+
   specify { expect(repr.related_hrefs "link1")
       .to contain_exactly "http://example.com/bar" }
   specify { expect(repr.related_hrefs "embed1")
@@ -395,6 +414,44 @@ HAL
   end
 
   # Background
+
+  let(:link1_repr) do
+    HalClient::Representation.new(hal_client: a_client, href: "http://example.com/bar")
+  end
+
+  let(:templated_link_repr) do
+    HalClient::Representation.new(hal_client: a_client, href: "http://example.com/people{?name}")
+  end
+
+  let(:link3a_repr) do
+    HalClient::Representation.new(hal_client: a_client, href: "http://example.com/link3-a")
+  end
+
+  let(:link3b_repr) do
+    HalClient::Representation.new(hal_client: a_client, href: "http://example.com/link3-b")
+  end
+
+
+  let(:link1_link) do
+    HalClient::Link.new(rel: 'link1', target: link1_repr)
+  end
+
+  let(:link2_link) do
+    HalClient::Link.new(rel: 'link2', target: link1_repr)
+  end
+
+  let(:templated_link_link) do
+    HalClient::Link.new(rel: 'templated_link', target: templated_link_repr)
+  end
+
+  let(:link3a_link) do
+    HalClient::Link.new(rel: 'link3', target: link3a_repr)
+  end
+
+  let(:link3b_link) do
+    HalClient::Link.new(rel: 'link3', target: link3b_repr)
+  end
+
 
   let(:a_client) { HalClient.new }
   let!(:bar_request) { stub_identity_request("http://example.com/bar") }
