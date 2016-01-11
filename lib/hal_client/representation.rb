@@ -318,7 +318,7 @@ class HalClient
 
     rescue InvalidRepresentationError => err
       fail InvalidRepresentationError, "/_embedded/#{jpointer_esc(link_rel)} is not a valid representation"
-end
+    end
 
     def linked(link_rel, options, &default_proc)
       default_proc ||= ->(link_rel,_options) {
