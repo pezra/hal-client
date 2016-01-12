@@ -9,7 +9,7 @@ describe HalClient::Representation do
   ,"_links": {
     "self": { "href": "http://example.com/foo" }
     ,"link1": { "href": "http://example.com/bar" }
-    ,"templated_link": { "href": "http://example.com/people{?name}"
+    ,"templated": { "href": "http://example.com/people{?name}"
                 ,"templated": true }
     ,"link3": [{ "href": "http://example.com/link3-a" }
                ,{ "href": "http://example.com/link3-b" }]
@@ -251,7 +251,7 @@ HAL
     end
 
     context "for existent templated link" do
-      subject { repr.related "templated_link", name: "bob" }
+      subject { repr.related "templated", name: "bob" }
       it { should have(1).item }
       it { should include_representation_of "http://example.com/people?name=bob"  }
     end
@@ -275,7 +275,7 @@ HAL
     specify { expect(subject).to include(link1_link) }
     specify { expect(subject).to_not include(link2_link) }
 
-    specify { expect(subject).to include(templated_link_link) }
+    specify { expect(subject).to include(templated_link) }
 
     specify { expect(subject).to include(link3a_link) }
     specify { expect(subject).to include(link3b_link) }
@@ -289,7 +289,7 @@ HAL
       .to contain_exactly "http://example.com/baz" }
   specify { expect { repr.related_hrefs 'wat' }.to raise_exception KeyError }
 
-  specify { expect(repr.raw_related_hrefs("templated_link").map(&:pattern))
+  specify { expect(repr.raw_related_hrefs("templated").map(&:pattern))
       .to contain_exactly "http://example.com/people{?name}" }
   specify { expect(repr.raw_related_hrefs("link1"))
       .to contain_exactly "http://example.com/bar" }
@@ -419,10 +419,6 @@ HAL
     HalClient::Representation.new(hal_client: a_client, href: "http://example.com/bar")
   end
 
-  let(:templated_link_repr) do
-    HalClient::Representation.new(hal_client: a_client, href: "http://example.com/people{?name}")
-  end
-
   let(:link3a_repr) do
     HalClient::Representation.new(hal_client: a_client, href: "http://example.com/link3-a")
   end
@@ -440,8 +436,9 @@ HAL
     HalClient::Link.new(rel: 'link2', target: link1_repr)
   end
 
-  let(:templated_link_link) do
-    HalClient::Link.new(rel: 'templated_link', target: templated_link_repr)
+  let(:templated_link) do
+    HalClient::Link.new(rel: 'templated',
+                        template: Addressable::Template.new('http://example.com/people{?name}'))
   end
 
   let(:link3a_link) do
