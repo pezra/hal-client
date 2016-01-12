@@ -65,6 +65,21 @@ describe HalClient::Link do
                                   parsed_json: MultiJson.load(raw_repr2))
   end
 
+  let(:templated_link1) do
+    HalClient::Link.new(rel: 'templated_link',
+                        template: Addressable::Template.new('http://example.com/people{?name}'))
+  end
+
+  describe "#href" do
+    specify { expect(link.href).to eq('http://example.com/href_1') }
+    specify { expect(templated_link1.href).to eq('http://example.com/people{?name}') }
+  end
+
+  describe "#templated?" do
+    specify { expect(link.templated?).to be false }
+    specify { expect(templated_link1.templated?).to be true }
+  end
+
   context "equality and hash" do
     let(:link_same_target_same_rel) { HalClient::Link.new(target: repr_1, rel: rel_1) }
 
@@ -74,6 +89,16 @@ describe HalClient::Link do
 
     let(:link_same_non_fetched) { HalClient::Link.new(target: repr_1_non_fetched, rel: rel_1) }
 
+    let(:same_as_templated_link1) do
+      HalClient::Link.new(rel: 'templated_link',
+                          template: Addressable::Template.new('http://example.com/people{?name}'))
+    end
+
+    let(:templated_link2) do
+      HalClient::Link.new(rel: 'templated_link',
+                          template: Addressable::Template.new('http://example.com/places{?name}'))
+    end
+
     describe "#==" do
       specify { expect(link == link_same_target_same_rel).to eq true }
       specify { expect(link == link_same_non_fetched).to eq true }
@@ -81,6 +106,9 @@ describe HalClient::Link do
       specify { expect(link == link_same_target_diff_rel).to eq false }
       specify { expect(link == link_diff_target_same_rel).to eq false }
       specify { expect(link == link_diff_target_diff_rel).to eq false }
+
+      specify { expect(templated_link1 == same_as_templated_link1).to eq true }
+      specify { expect(templated_link1 == templated_link2).to eq false }
 
       specify { expect(link == Object.new).to eq false }
     end
@@ -93,6 +121,9 @@ describe HalClient::Link do
       specify { expect(link.eql? link_diff_target_same_rel).to eq false }
       specify { expect(link.eql? link_diff_target_diff_rel).to eq false }
 
+      specify { expect(templated_link1 == same_as_templated_link1).to eq true }
+      specify { expect(templated_link1 == templated_link2).to eq false }
+
       specify { expect(link.eql? Object.new).to eq false }
     end
 
@@ -103,6 +134,9 @@ describe HalClient::Link do
       specify{ expect(link.hash).to_not eq link_same_target_diff_rel.hash }
       specify{ expect(link.hash).to_not eq link_diff_target_same_rel.hash }
       specify{ expect(link.hash).to_not eq link_diff_target_diff_rel.hash }
+
+      specify { expect(templated_link1.hash).to eq(same_as_templated_link1.hash) }
+      specify { expect(templated_link1.hash).to_not eq(templated_link2.hash) }
     end
 
   end
