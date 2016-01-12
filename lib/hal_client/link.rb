@@ -48,8 +48,8 @@ class HalClient
     end
 
     def ==(other)
-      if (href && other.respond_to?(:href)) && (rel && other.respond_to?(:rel))
-        href == other.href && rel == other.rel
+      if other.respond_to?(:href) && other.respond_to?(:rel)  && other.respond_to?(:templated?)
+        (href == other.href) && (rel == other.rel)  && (templated? == other.templated?)
       else
         false
       end
@@ -58,7 +58,7 @@ class HalClient
 
 
     def hash
-      [rel, href].hash
+      [rel, href, templated?].hash
     end
 
   end

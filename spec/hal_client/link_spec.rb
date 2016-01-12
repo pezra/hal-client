@@ -99,6 +99,11 @@ describe HalClient::Link do
                           template: Addressable::Template.new('http://example.com/places{?name}'))
     end
 
+    let(:template_but_not_a_template) do
+      HalClient::Link.new(rel: 'rel_1',
+                          template: Addressable::Template.new('http://example.com/href_1'))
+    end
+
     describe "#==" do
       specify { expect(link == link_same_target_same_rel).to eq true }
       specify { expect(link == link_same_non_fetched).to eq true }
@@ -109,6 +114,8 @@ describe HalClient::Link do
 
       specify { expect(templated_link1 == same_as_templated_link1).to eq true }
       specify { expect(templated_link1 == templated_link2).to eq false }
+
+      specify { expect(link == template_but_not_a_template).to eq false }
 
       specify { expect(link == Object.new).to eq false }
     end
@@ -121,8 +128,10 @@ describe HalClient::Link do
       specify { expect(link.eql? link_diff_target_same_rel).to eq false }
       specify { expect(link.eql? link_diff_target_diff_rel).to eq false }
 
-      specify { expect(templated_link1 == same_as_templated_link1).to eq true }
-      specify { expect(templated_link1 == templated_link2).to eq false }
+      specify { expect(templated_link1.eql? same_as_templated_link1).to eq true }
+      specify { expect(templated_link1.eql? templated_link2).to eq false }
+
+      specify { expect(link.eql? template_but_not_a_template).to eq false }
 
       specify { expect(link.eql? Object.new).to eq false }
     end
@@ -137,6 +146,8 @@ describe HalClient::Link do
 
       specify { expect(templated_link1.hash).to eq(same_as_templated_link1.hash) }
       specify { expect(templated_link1.hash).to_not eq(templated_link2.hash) }
+
+      specify { expect(link.hash).to_not eq(template_but_not_a_template.hash)}
     end
 
   end
