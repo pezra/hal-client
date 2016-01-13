@@ -181,10 +181,13 @@ class HalClient
       result = Set.new
 
       embedded_entries = flatten_section(raw.fetch("_embedded", {}))
-      result.merge(embedded_entries.map { |entry| link_from_embedded_entry(entry) })
+      result.merge(embedded_entries.map do |entry|
+        Link.new_from_embedded_entry(hash_entry: entry, hal_client: hal_client)
+      end)
 
       link_entries = flatten_section(raw.fetch("_links", {}).reject {|k| k == 'self'})
-      result.merge(link_entries.map { |entry| link_from_link_entry(entry) })
+      result.merge(link_entries.map { |entry|
+        Link.new_from_link_entry(hash_entry: entry, hal_client: hal_client) })
 
       result
     end
@@ -322,25 +325,6 @@ class HalClient
           [some_link_info].flatten
           .map { |a_link_info| { rel: rel, data: a_link_info } }
       }
-    end
-
-    def link_from_link_entry(hash_entry)
-      rel = hash_entry[:rel]
-      hash_data = hash_entry[:data]
-      href = hash_data['href']
-
-      if hash_data['templated']
-        Link.new(rel: rel, template: Addressable::Template.new(href))
-      else
-        Link.new(rel: rel, target: Representation.new(hal_client: hal_client, href: href))
-      end
-    end
-
-    def link_from_embedded_entry(hash_entry)
-      rel = hash_entry[:rel]
-      hash_data = hash_entry[:data]
-
-      Link.new(rel: rel, target: Representation.new(hal_client: hal_client, parsed_json: hash_data))
     end
 
     def links
