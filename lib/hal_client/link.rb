@@ -1,7 +1,5 @@
 require 'hal_client/representation'
 
-require 'byebug'
-
 class HalClient
 
   # HAL representation of a single link. Provides access to an embedded representation.
