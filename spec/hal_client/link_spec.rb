@@ -71,8 +71,8 @@ describe HalClient::Link do
   end
 
   describe "#href" do
-    specify { expect(link.href).to eq('http://example.com/href_1') }
-    specify { expect(templated_link1.href).to eq('http://example.com/people{?name}') }
+    specify { expect(link.raw_href).to eq('http://example.com/href_1') }
+    specify { expect(templated_link1.raw_href).to eq('http://example.com/people{?name}') }
   end
 
   describe "#templated?" do

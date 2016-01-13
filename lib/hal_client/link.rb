@@ -37,7 +37,7 @@ class HalClient
 
     attr_accessor :rel, :target, :template
 
-    def href
+    def raw_href
       templated? ? template.pattern : target.href
     end
 
@@ -46,8 +46,8 @@ class HalClient
     end
 
     def ==(other)
-      if other.respond_to?(:href) && other.respond_to?(:rel)  && other.respond_to?(:templated?)
-        (href == other.href) && (rel == other.rel)  && (templated? == other.templated?)
+      if other.respond_to?(:raw_href) && other.respond_to?(:rel)  && other.respond_to?(:templated?)
+        (raw_href == other.raw_href) && (rel == other.rel)  && (templated? == other.templated?)
       else
         false
       end
@@ -56,7 +56,7 @@ class HalClient
 
 
     def hash
-      [rel, href, templated?].hash
+      [rel, raw_href, templated?].hash
     end
 
   end
