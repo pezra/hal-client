@@ -181,10 +181,10 @@ class HalClient
       result = Set.new
 
       embedded_entries = flatten_section(raw.fetch("_embedded", {}))
-      embedded_entries.map { |entry| result.add?(link_from_embedded_entry(entry)) }
+      result.merge(embedded_entries.map { |entry| link_from_embedded_entry(entry) })
 
       link_entries = flatten_section(raw.fetch("_links", {}).reject {|k| k == 'self'})
-      link_entries.map { |entry| result.add?(link_from_link_entry(entry)) }
+      result.merge(link_entries.map { |entry| link_from_link_entry(entry) })
 
       result
     end
