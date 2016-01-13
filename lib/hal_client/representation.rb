@@ -316,19 +316,12 @@ class HalClient
     MISSING = Object.new
 
     def flatten_section(section_hash)
-      result = Array.new
-
-      section_hash.each_pair do |rel, rel_data|
-        if rel_data.is_a?(Array)
-          rel_data.each do |single_item|
-            result << { rel: rel, data: single_item }
-          end
-        elsif rel_data.is_a?(Hash)
-          result << { rel: rel, data: rel_data };
-        end
-      end
-
-      result
+      section_hash
+        .each_pair
+        .flat_map { |rel, some_link_info|
+          [some_link_info].flatten
+          .map { |a_link_info| { rel: rel, data: a_link_info } }
+      }
     end
 
     def link_from_link_entry(hash_entry)
