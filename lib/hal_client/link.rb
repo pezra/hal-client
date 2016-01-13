@@ -37,14 +37,19 @@ class HalClient
 
     attr_accessor :rel, :target, :template
 
+    # Returns the URL of the resource this link references.
+    # In the case of a templated link, this is the unresolved url template pattern.
     def raw_href
       templated? ? template.pattern : target.href
     end
 
+    # Returns true for a templated link, false for an ordinary (non-templated) link
     def templated?
       !template.nil?
     end
 
+    # Links with the same href, same rel value, and the same 'templated' value are considered equal
+    # Otherwise, they are considered unequal
     def ==(other)
       if other.respond_to?(:raw_href) && other.respond_to?(:rel)  && other.respond_to?(:templated?)
         (raw_href == other.raw_href) && (rel == other.rel)  && (templated? == other.templated?)
@@ -55,6 +60,8 @@ class HalClient
     alias :eql? :==
 
 
+    # Differing Representations or Addressable::Templates with matching hrefs will get matching hash
+    # values, since we are using raw_href and not the objects themselves when computing hash
     def hash
       [rel, raw_href, templated?].hash
     end
