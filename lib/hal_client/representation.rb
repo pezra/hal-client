@@ -292,7 +292,16 @@ class HalClient
     def raw
       if @raw.nil? && @href
         (fail "unable to make requests due to missing hal client") unless hal_client
-        @raw ||= hal_client.get(@href).raw
+
+        response = hal_client.get(@href)
+
+        unless response.is_a?(Representation)
+          error_message = "Response body wasn't a valid HAL document:\n\n"
+          error_message += response.body
+          raise InvalidRepresentationError.new(error_message)
+        end
+
+        @raw ||= response.raw
       end
 
       @raw
