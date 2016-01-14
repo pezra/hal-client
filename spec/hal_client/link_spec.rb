@@ -87,25 +87,23 @@ describe HalClient::Link do
   let(:templated_link1) { HalClient::Link.new(rel: 'templated_link', template: template_1) }
 
   describe "#initialize" do
-    # Require target
-    specify { expect { HalClient::Link.new(rel: rel_1) }.to raise_error(ArgumentError) }
+    it "requires a target" do
+      expect { HalClient::Link.new(rel: rel_1) }.to raise_error(ArgumentError)
+    end
 
-    # Don't allow both target and template
-    specify do
+    it "doesn't allow both target and template" do
       expect {
         HalClient::Link.new(rel: rel_1, target: repr_1, template: template_1)
       }.to raise_error(ArgumentError)
     end
 
-    # Require target to be a Representation
-    specify do
+    it "requires target to be a Representation" do
       expect {
         HalClient::Link.new(rel: rel_1, target: template_1)
       }.to raise_error(ArgumentError)
     end
 
-    # Require template to be an Addressable::Template
-    specify do
+    it "requires template to be an Addressable::Template" do
       expect {
         HalClient::Link.new(rel: rel_1, template: repr_1)
       }.to raise_error(ArgumentError)
