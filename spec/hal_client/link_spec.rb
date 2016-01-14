@@ -57,7 +57,7 @@ describe HalClient::Link do
     HAL
   end
 
-  def raw_repr2(href: href_1)
+  def href_only_raw_repr(href: href_1)
     <<-HAL
       {
         "_links": {
@@ -79,7 +79,7 @@ describe HalClient::Link do
 
   let(:repr_1_non_fetched) do
     HalClient::Representation.new(hal_client: a_client,
-                                  parsed_json: MultiJson.load(raw_repr2))
+                                  parsed_json: MultiJson.load(href_only_raw_repr))
   end
 
   let(:template_1) { Addressable::Template.new('http://example.com/people{?name}') }
