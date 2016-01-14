@@ -65,9 +65,9 @@ describe HalClient::Link do
                                   parsed_json: MultiJson.load(raw_repr2))
   end
 
-  let(:templated_link1) do
-    HalClient::Link.new(rel: 'templated_link',
-                        template: Addressable::Template.new('http://example.com/people{?name}'))
+  let(:template_1) { Addressable::Template.new('http://example.com/people{?name}') }
+
+  let(:templated_link1) { HalClient::Link.new(rel: 'templated_link', template: template_1) }
   end
 
   describe "#href" do
