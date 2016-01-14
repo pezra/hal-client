@@ -68,6 +68,31 @@ describe HalClient::Link do
   let(:template_1) { Addressable::Template.new('http://example.com/people{?name}') }
 
   let(:templated_link1) { HalClient::Link.new(rel: 'templated_link', template: template_1) }
+
+  describe "#initialize" do
+    # Require target
+    specify { expect { HalClient::Link.new(rel: rel_1) }.to raise_error(ArgumentError) }
+
+    # Don't allow both target and template
+    specify do
+      expect {
+        HalClient::Link.new(rel: rel_1, target: repr_1, template: template_1)
+      }.to raise_error(ArgumentError)
+    end
+
+    # Require target to be a Representation
+    specify do
+      expect {
+        HalClient::Link.new(rel: rel_1, target: template_1)
+      }.to raise_error(ArgumentError)
+    end
+
+    # Require template to be an Addressable::Template
+    specify do
+      expect {
+        HalClient::Link.new(rel: rel_1, template: repr_1)
+      }.to raise_error(ArgumentError)
+    end
   end
 
   describe "#href" do
