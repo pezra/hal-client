@@ -27,11 +27,11 @@ class HalClient
       end
 
       if @target && !@target.kind_of?(Representation)
-        fail InvalidRepresentationError, "Invalid HAL representation: #{target.inspect}"
+        (fail ArgumentError, "Invalid HAL representation: #{target.inspect}")
       end
 
       if @template && !@template.kind_of?(Addressable::Template)
-        fail InvalidRepresentationError, "Invalid Addressable::Template: #{template.inspect}"
+        (fail ArgumentError, "Invalid Addressable::Template: #{template.inspect}")
       end
     end
 
