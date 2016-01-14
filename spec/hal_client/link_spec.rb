@@ -15,6 +15,23 @@ describe HalClient::Link do
   let(:rel_1) { 'rel_1' }
   let(:rel_2) { 'rel_2' }
 
+  let(:full_uri_rel_1) { 'http://example.com/rels/rel_1' }
+  let(:full_uri_link_1) { HalClient::Link.new(rel: full_uri_rel_1, target: repr_1) }
+
+  let(:curie_resolver) do
+    HalClient::CurieResolver.new({
+      'name' => 'ex',
+      'href' => 'http://example.com/rels/{rel}',
+      'templated' => true
+    })
+  end
+
+  let(:curied_rel_1) { 'ex:rel_1' }
+
+  let(:curied_link_1) do
+    HalClient::Link.new(rel: curied_rel_1, target: repr_1, curie_resolver: curie_resolver)
+  end
+
   let(:href_1) { 'http://example.com/href_1' }
   let(:href_2) { 'http://example.com/href_2' }
 
@@ -142,6 +159,8 @@ describe HalClient::Link do
 
       specify { expect(link == template_but_not_a_template).to eq false }
 
+      specify { expect(full_uri_link_1 == curied_link_1).to eq true }
+
       specify { expect(link == Object.new).to eq false }
     end
 
@@ -158,6 +177,8 @@ describe HalClient::Link do
 
       specify { expect(link.eql? template_but_not_a_template).to eq false }
 
+      specify { expect(full_uri_link_1.eql? curied_link_1).to eq true }
+
       specify { expect(link.eql? Object.new).to eq false }
     end
 
@@ -173,6 +194,8 @@ describe HalClient::Link do
       specify { expect(templated_link1.hash).to_not eq(templated_link2.hash) }
 
       specify { expect(link.hash).to_not eq(template_but_not_a_template.hash)}
+
+      specify { expect(full_uri_link_1.hash).to eq(curied_link_1.hash) }
     end
 
   end

@@ -15,6 +15,7 @@ class HalClient
       @rel = options[:rel]
       @target = options[:target]
       @template = options[:template]
+      @curie_resolver = options[:curie_resolver] || CurieResolver.new([])
 
       (fail ArgumentError, "A rel must be provided") if @rel.nil?
 
@@ -35,7 +36,7 @@ class HalClient
       end
     end
 
-    attr_accessor :rel, :target, :template
+    attr_accessor :rel, :target, :template, :curie_resolver
 
     def self.new_from_link_entry(hash_entry:, hal_client:)
       rel = hash_entry[:rel]
@@ -63,6 +64,10 @@ class HalClient
       templated? ? template.pattern : target.href
     end
 
+    def resolved_rel
+      curie_resolver.resolve(rel)
+    end
+
     # Returns true for a templated link, false for an ordinary (non-templated) link
     def templated?
       !template.nil?
@@ -71,8 +76,12 @@ class HalClient
     # Links with the same href, same rel value, and the same 'templated' value are considered equal
     # Otherwise, they are considered unequal
     def ==(other)
-      if other.respond_to?(:raw_href) && other.respond_to?(:rel)  && other.respond_to?(:templated?)
-        (raw_href == other.raw_href) && (rel == other.rel)  && (templated? == other.templated?)
+      if other.respond_to?(:raw_href) &&
+         other.respond_to?(:resolved_rel) &&
+         other.respond_to?(:templated?)
+        (raw_href == other.raw_href) &&
+          (resolved_rel == other.resolved_rel) &&
+          (templated? == other.templated?)
       else
         false
       end
@@ -83,7 +92,7 @@ class HalClient
     # Differing Representations or Addressable::Templates with matching hrefs will get matching hash
     # values, since we are using raw_href and not the objects themselves when computing hash
     def hash
-      [rel, raw_href, templated?].hash
+      [resolved_rel, raw_href, templated?].hash
     end
 
   end
