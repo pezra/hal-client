@@ -38,23 +38,29 @@ class HalClient
 
     attr_accessor :rel, :target, :template, :curie_resolver
 
-    def self.new_from_link_entry(hash_entry:, hal_client:)
+    def self.new_from_link_entry(hash_entry:, hal_client:, curie_resolver:)
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
       href = hash_data['href']
 
       if hash_data['templated']
-        Link.new(rel: rel, template: Addressable::Template.new(href))
+        Link.new(rel: rel,
+                 template: Addressable::Template.new(href),
+                 curie_resolver: curie_resolver)
       else
-        Link.new(rel: rel, target: Representation.new(hal_client: hal_client, href: href))
+        Link.new(rel: rel,
+                 target: Representation.new(hal_client: hal_client, href: href),
+                 curie_resolver: curie_resolver)
       end
     end
 
-    def self.new_from_embedded_entry(hash_entry:, hal_client:)
+    def self.new_from_embedded_entry(hash_entry:, hal_client:, curie_resolver:)
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
 
-      Link.new(rel: rel, target: Representation.new(hal_client: hal_client, parsed_json: hash_data))
+      Link.new(rel: rel,
+               target: Representation.new(hal_client: hal_client, parsed_json: hash_data),
+               curie_resolver: curie_resolver)
     end
 
 
