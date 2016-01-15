@@ -8,116 +8,6 @@ describe HalClient::Link do
 
   subject(:link) { described_class.new(rel: rel_1, target: repr_1) }
 
-  # Background
-
-  let(:a_client) { HalClient.new }
-
-  let(:rel_1) { 'rel_1' }
-  let(:rel_2) { 'rel_2' }
-
-  let(:full_uri_rel_1) { 'http://example.com/rels/rel_1' }
-  let(:full_uri_link_1) { HalClient::Link.new(rel: full_uri_rel_1, target: repr_1) }
-
-  let(:curie_resolver) do
-    HalClient::CurieResolver.new({
-      'name' => 'ex',
-      'href' => 'http://example.com/rels/{rel}',
-      'templated' => true
-    })
-  end
-
-  let(:curied_rel_1) { 'ex:rel_1' }
-
-  let(:curied_link_1) do
-    HalClient::Link.new(rel: curied_rel_1, target: repr_1, curie_resolver: curie_resolver)
-  end
-
-  let(:href_1) { 'http://example.com/href_1' }
-  let(:href_2) { 'http://example.com/href_2' }
-
-  let(:relative_href_1) { 'path/to/href_1' }
-
-  def link_entry_hash(options = {})
-    href = options[:href] || href_1
-    rel = options[:rel] || rel_1
-    templated = options[:templated] || nil
-
-    hash_data = { 'href' => href }
-    hash_data['templated'] = templated if templated
-
-    {
-      rel: rel,
-      data: hash_data
-    }
-  end
-
-  def embedded_entry_hash(options = {})
-    href = options[:href] || href_1
-    rel = options[:rel] || rel_1
-
-    {
-      rel: rel,
-      data: { '_links' => { 'self' => { 'href' => href } } }
-    }
-  end
-
-  def raw_repr(options = {})
-    href = options[:href] || href_1
-
-    <<-HAL
-      {
-         "prop1": 1
-        ,"prop2": 2
-        ,"_links": {
-          "self": { "href": "#{href}" }
-          ,"link1": { "href": "http://example.com/bar" }
-          ,"templated_link": { "href": "http://example.com/people{?name}"
-                      ,"templated": true }
-          ,"link3": [{ "href": "http://example.com/link3-a" }
-                     ,{ "href": "http://example.com/link3-b" }]
-        }
-        ,"_embedded": {
-          "embed1": {
-            "_links": { "self": { "href": "http://example.com/baz" }}
-          }
-        }
-      }
-    HAL
-  end
-
-  def href_only_raw_repr(options = {})
-    href = options[:href] || href_1
-
-    <<-HAL
-      {
-        "_links": {
-          "self": { "href": "#{href}" }
-        }
-      }
-    HAL
-  end
-
-  def href_only_repr(options = {})
-    href = options[:href] || href_1
-
-    HalClient::Representation.new(hal_client: a_client,
-                                  parsed_json: MultiJson.load(href_only_raw_repr(href: href)))
-  end
-
-  let(:repr_1) do
-    HalClient::Representation.new(hal_client: a_client,
-                                  parsed_json: MultiJson.load(raw_repr))
-  end
-
-  let(:repr_2) do
-     HalClient::Representation.new(hal_client: a_client,
-                                  parsed_json: MultiJson.load(raw_repr(href: href_2)))
-  end
-
-  let(:template_1) { Addressable::Template.new('http://example.com/people{?name}') }
-
-  let(:templated_link1) { HalClient::Link.new(rel: 'templated_link', template: template_1) }
-
   describe "#initialize" do
     it "requires a target" do
       expect { HalClient::Link.new(rel: rel_1) }.to raise_error(ArgumentError)
@@ -268,5 +158,115 @@ describe HalClient::Link do
 
   end
 
+
+  # Background
+
+  let(:a_client) { HalClient.new }
+
+  let(:rel_1) { 'rel_1' }
+  let(:rel_2) { 'rel_2' }
+
+  let(:full_uri_rel_1) { 'http://example.com/rels/rel_1' }
+  let(:full_uri_link_1) { HalClient::Link.new(rel: full_uri_rel_1, target: repr_1) }
+
+  let(:curie_resolver) do
+    HalClient::CurieResolver.new({
+                                   'name' => 'ex',
+                                   'href' => 'http://example.com/rels/{rel}',
+                                   'templated' => true
+                                 })
+  end
+
+  let(:curied_rel_1) { 'ex:rel_1' }
+
+  let(:curied_link_1) do
+    HalClient::Link.new(rel: curied_rel_1, target: repr_1, curie_resolver: curie_resolver)
+  end
+
+  let(:href_1) { 'http://example.com/href_1' }
+  let(:href_2) { 'http://example.com/href_2' }
+
+  let(:relative_href_1) { 'path/to/href_1' }
+
+  def link_entry_hash(options = {})
+    href = options[:href] || href_1
+    rel = options[:rel] || rel_1
+    templated = options[:templated] || nil
+
+    hash_data = { 'href' => href }
+    hash_data['templated'] = templated if templated
+
+    {
+      rel: rel,
+      data: hash_data
+    }
+  end
+
+  def embedded_entry_hash(options = {})
+    href = options[:href] || href_1
+    rel = options[:rel] || rel_1
+
+    {
+      rel: rel,
+      data: { '_links' => { 'self' => { 'href' => href } } }
+    }
+  end
+
+  def raw_repr(options = {})
+    href = options[:href] || href_1
+
+    <<-HAL
+      {
+         "prop1": 1
+        ,"prop2": 2
+        ,"_links": {
+          "self": { "href": "#{href}" }
+          ,"link1": { "href": "http://example.com/bar" }
+          ,"templated_link": { "href": "http://example.com/people{?name}"
+                      ,"templated": true }
+          ,"link3": [{ "href": "http://example.com/link3-a" }
+                     ,{ "href": "http://example.com/link3-b" }]
+        }
+        ,"_embedded": {
+          "embed1": {
+            "_links": { "self": { "href": "http://example.com/baz" }}
+          }
+        }
+      }
+    HAL
+  end
+
+  def href_only_raw_repr(options = {})
+    href = options[:href] || href_1
+
+    <<-HAL
+      {
+        "_links": {
+          "self": { "href": "#{href}" }
+        }
+      }
+    HAL
+  end
+
+  def href_only_repr(options = {})
+    href = options[:href] || href_1
+
+    HalClient::Representation.new(hal_client: a_client,
+                                  parsed_json: MultiJson.load(href_only_raw_repr(href: href)))
+  end
+
+  let(:repr_1) do
+    HalClient::Representation.new(hal_client: a_client,
+                                  parsed_json: MultiJson.load(raw_repr))
+  end
+
+  let(:repr_2) do
+    HalClient::Representation.new(hal_client: a_client,
+                                  parsed_json: MultiJson.load(raw_repr(href: href_2)))
+  end
+
+  let(:template_1) { Addressable::Template.new('http://example.com/people{?name}') }
+
+  let(:templated_link1) { HalClient::Link.new(rel: 'templated_link', template: template_1) }
 
 end
