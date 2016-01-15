@@ -13,12 +13,12 @@ class HalClient
     #   :template - A URI template ( https://www.rfc-editor.org/rfc/rfc6570.txt )
     #   :curie_resolver - An instance of CurieResolver (used to resolve curied rels)
     def initialize(options)
-      @rel = options[:rel]
+      @literal_rel = options[:rel]
       @target = options[:target]
       @template = options[:template]
       @curie_resolver = options[:curie_resolver] || CurieResolver.new([])
 
-      (fail ArgumentError, "A rel must be provided") if @rel.nil?
+      (fail ArgumentError, "A rel must be provided") if @literal_rel.nil?
 
       if @target.nil? && @template.nil?
         (fail ArgumentError, "A target or template must be provided")
@@ -37,7 +37,7 @@ class HalClient
       end
     end
 
-    attr_accessor :rel, :target, :template, :curie_resolver
+    attr_accessor :literal_rel, :target, :template, :curie_resolver
 
 
     # Create a new Link using an entry from the '_links' section of a HAL document
@@ -93,7 +93,7 @@ class HalClient
     end
 
     def fully_qualified_rel
-      curie_resolver.resolve(rel)
+      curie_resolver.resolve(literal_rel)
     end
 
     # Returns true for a templated link, false for an ordinary (non-templated) link
