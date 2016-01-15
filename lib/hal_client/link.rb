@@ -56,7 +56,7 @@ class HalClient
 
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
-      href = (Addressable::URI.parse(base_url) + hash_data['href']).to_s
+      href = (base_url + hash_data['href']).to_s
 
       if hash_data['templated']
         Link.new(rel: rel,
@@ -87,7 +87,7 @@ class HalClient
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
 
-      absolute_href = (Addressable::URI.parse(base_url) + hash_data['_links']['self']['href']).to_s
+      absolute_href = (base_url + hash_data['_links']['self']['href']).to_s
       hash_data['_links']['self']['href'] = absolute_href
 
       Link.new(rel: rel,

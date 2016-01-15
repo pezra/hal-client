@@ -179,13 +179,14 @@ class HalClient
 
     def all_links
       result = Set.new
+      base_url = Addressable::URI.parse(href || "")
 
       embedded_entries = flatten_section(raw.fetch("_embedded", {}))
       result.merge(embedded_entries.map do |entry|
         Link.new_from_embedded_entry(hash_entry: entry,
                                      hal_client: hal_client,
                                      curie_resolver: namespaces,
-                                     base_url: href)
+                                     base_url: base_url)
       end)
 
       link_entries = flatten_section(raw.fetch("_links", {}))
@@ -193,7 +194,7 @@ class HalClient
         Link.new_from_link_entry(hash_entry: entry,
                                  hal_client: hal_client,
                                  curie_resolver: namespaces,
-                                 base_url: href) })
+                                 base_url: base_url) })
 
       result
     end
