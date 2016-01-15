@@ -188,7 +188,7 @@ class HalClient
                                      base_url: href)
       end)
 
-      link_entries = flatten_section(raw.fetch("_links", {}).reject {|k| k == 'self'})
+      link_entries = flatten_section(raw.fetch("_links", {}))
       result.merge(link_entries.map { |entry|
         Link.new_from_link_entry(hash_entry: entry,
                                  hal_client: hal_client,
