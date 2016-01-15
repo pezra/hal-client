@@ -35,6 +35,25 @@ describe HalClient::Link do
   let(:href_1) { 'http://example.com/href_1' }
   let(:href_2) { 'http://example.com/href_2' }
 
+  let(:relative_href_1) { 'path/to/href_1' }
+
+  def link_entry_hash(href: href_1, rel: rel_1, templated: nil)
+    hash_data = { 'href' => href }
+    hash_data['templated'] = templated if templated
+
+    {
+      rel: rel,
+      data: hash_data
+    }
+  end
+
+  def embedded_entry_hash(href: href_1, rel: rel_1)
+    {
+      rel: rel,
+      data: { '_links' => { 'self' => { 'href' => href } } }
+    }
+  end
+
   def raw_repr(href: href_1)
     <<-HAL
       {
@@ -107,6 +126,44 @@ describe HalClient::Link do
       expect {
         HalClient::Link.new(rel: rel_1, template: repr_1)
       }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe ".new_from_link_entry" do
+    it "creates an instance of Link" do
+      my_link = described_class.new_from_link_entry(hash_entry: link_entry_hash(href: href_1),
+                                                    hal_client: a_client,
+                                                    curie_resolver: curie_resolver,
+                                                    base_url: href_1)
+      expect(my_link).to be_a(HalClient::Link)
+    end
+
+    it "handles relative hrefs" do
+      input_hash = link_entry_hash(href: relative_href_1)
+      my_link = described_class.new_from_link_entry(hash_entry: input_hash,
+                                                    hal_client: a_client,
+                                                    curie_resolver: curie_resolver,
+                                                    base_url: href_1)
+      expect(my_link.raw_href).to eq((Addressable::URI.parse(href_1) + relative_href_1).to_s)
+    end
+  end
+
+  describe ".new_from_embedded_entry" do
+    it "creates an instance of Link" do
+      my_link = described_class.new_from_embedded_entry(hash_entry: embedded_entry_hash,
+                                                        hal_client: a_client,
+                                                        curie_resolver: curie_resolver,
+                                                        base_url: href_1)
+      expect(my_link).to be_a(HalClient::Link)
+    end
+
+    it "handles relative hrefs" do
+      input_hash = embedded_entry_hash(href: relative_href_1)
+      my_link = described_class.new_from_embedded_entry(hash_entry: input_hash,
+                                                        hal_client: a_client,
+                                                        curie_resolver: curie_resolver,
+                                                        base_url: href_1)
+      expect(my_link.raw_href).to eq((Addressable::URI.parse(href_1) + relative_href_1).to_s)
     end
   end
 

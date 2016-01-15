@@ -38,10 +38,10 @@ class HalClient
 
     attr_accessor :rel, :target, :template, :curie_resolver
 
-    def self.new_from_link_entry(hash_entry:, hal_client:, curie_resolver:)
+    def self.new_from_link_entry(hash_entry:, hal_client:, curie_resolver:, base_url:)
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
-      href = hash_data['href']
+      href = (Addressable::URI.parse(base_url) + hash_data['href']).to_s
 
       if hash_data['templated']
         Link.new(rel: rel,
@@ -54,9 +54,12 @@ class HalClient
       end
     end
 
-    def self.new_from_embedded_entry(hash_entry:, hal_client:, curie_resolver:)
+    def self.new_from_embedded_entry(hash_entry:, hal_client:, curie_resolver:, base_url:)
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
+
+      absolute_href = (Addressable::URI.parse(base_url) + hash_data['_links']['self']['href']).to_s
+      hash_data['_links']['self']['href'] = absolute_href
 
       Link.new(rel: rel,
                target: Representation.new(hal_client: hal_client, parsed_json: hash_data),

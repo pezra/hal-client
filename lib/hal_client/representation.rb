@@ -184,14 +184,16 @@ class HalClient
       result.merge(embedded_entries.map do |entry|
         Link.new_from_embedded_entry(hash_entry: entry,
                                      hal_client: hal_client,
-                                     curie_resolver: namespaces)
+                                     curie_resolver: namespaces,
+                                     base_url: href)
       end)
 
       link_entries = flatten_section(raw.fetch("_links", {}).reject {|k| k == 'self'})
       result.merge(link_entries.map { |entry|
         Link.new_from_link_entry(hash_entry: entry,
                                  hal_client: hal_client,
-                                 curie_resolver: namespaces) })
+                                 curie_resolver: namespaces,
+                                 base_url: href) })
 
       result
     end
