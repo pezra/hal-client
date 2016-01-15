@@ -48,7 +48,12 @@ class HalClient
     #   :curie_resolver - An instance of CurieResolver (used to resolve curied rels)
     #   :base_url - Base url for resolving relative links in hash_entry (probably the parent
     # document's "self" link)
-    def self.new_from_link_entry(hash_entry:, hal_client:, curie_resolver:, base_url:)
+    def self.new_from_link_entry(options)
+      hash_entry = options[:hash_entry]
+      hal_client = options[:hal_client]
+      curie_resolver = options[:curie_resolver]
+      base_url = options[:base_url]
+
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
       href = (Addressable::URI.parse(base_url) + hash_data['href']).to_s
@@ -73,7 +78,12 @@ class HalClient
     #   :curie_resolver - An instance of CurieResolver (used to resolve curied rels)
     #   :base_url - Base url for resolving relative links in hash_entry (probably the parent
     # document's "self" link)
-    def self.new_from_embedded_entry(hash_entry:, hal_client:, curie_resolver:, base_url:)
+    def self.new_from_embedded_entry(options)
+      hash_entry = options[:hash_entry]
+      hal_client = options[:hal_client]
+      curie_resolver = options[:curie_resolver]
+      base_url = options[:base_url]
+
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
 

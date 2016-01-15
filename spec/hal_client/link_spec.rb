@@ -37,7 +37,11 @@ describe HalClient::Link do
 
   let(:relative_href_1) { 'path/to/href_1' }
 
-  def link_entry_hash(href: href_1, rel: rel_1, templated: nil)
+  def link_entry_hash(options = {})
+    href = options[:href] || href_1
+    rel = options[:rel] || rel_1
+    templated = options[:templated] || nil
+
     hash_data = { 'href' => href }
     hash_data['templated'] = templated if templated
 
@@ -47,14 +51,19 @@ describe HalClient::Link do
     }
   end
 
-  def embedded_entry_hash(href: href_1, rel: rel_1)
+  def embedded_entry_hash(options = {})
+    href = options[:href] || href_1
+    rel = options[:rel] || rel_1
+
     {
       rel: rel,
       data: { '_links' => { 'self' => { 'href' => href } } }
     }
   end
 
-  def raw_repr(href: href_1)
+  def raw_repr(options = {})
+    href = options[:href] || href_1
+
     <<-HAL
       {
          "prop1": 1
@@ -76,7 +85,9 @@ describe HalClient::Link do
     HAL
   end
 
-  def href_only_raw_repr(href: href_1)
+  def href_only_raw_repr(options = {})
+    href = options[:href] || href_1
+
     <<-HAL
       {
         "_links": {
@@ -86,7 +97,9 @@ describe HalClient::Link do
     HAL
   end
 
-  def href_only_repr(href: href_1)
+  def href_only_repr(options = {})
+    href = options[:href] || href_1
+
     HalClient::Representation.new(hal_client: a_client,
                                   parsed_json: MultiJson.load(href_only_raw_repr(href: href)))
   end
