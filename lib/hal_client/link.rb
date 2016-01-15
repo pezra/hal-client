@@ -10,7 +10,8 @@ class HalClient
     # options - name parameters
     #   :rel - This Link's rel property
     #   :target - An instance of Representation
-    #   :template = A URI template ( https://www.rfc-editor.org/rfc/rfc6570.txt )
+    #   :template - A URI template ( https://www.rfc-editor.org/rfc/rfc6570.txt )
+    #   :curie_resolver - An instance of CurieResolver (used to resolve curied rels)
     def initialize(options)
       @rel = options[:rel]
       @target = options[:target]
@@ -38,6 +39,15 @@ class HalClient
 
     attr_accessor :rel, :target, :template, :curie_resolver
 
+
+    # Create a new Link using an entry from the '_links' section of a HAL document
+    #
+    # options - name parameters
+    #   :hash_entry - a hash containing keys :rel (string) and :data (hash from a '_links' entry)
+    #   :hal_client - an instance of HalClient
+    #   :curie_resolver - An instance of CurieResolver (used to resolve curied rels)
+    #   :base_url - Base url for resolving relative links in hash_entry (probably the parent
+    # document's "self" link)
     def self.new_from_link_entry(hash_entry:, hal_client:, curie_resolver:, base_url:)
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
@@ -54,6 +64,15 @@ class HalClient
       end
     end
 
+
+    # Create a new Link using an entry from the '_embedded' section of a HAL document
+    #
+    # options - name parameters
+    #   :hash_entry - a hash containing keys :rel (string) and :data (hash from a '_embedded' entry)
+    #   :hal_client - an instance of HalClient
+    #   :curie_resolver - An instance of CurieResolver (used to resolve curied rels)
+    #   :base_url - Base url for resolving relative links in hash_entry (probably the parent
+    # document's "self" link)
     def self.new_from_embedded_entry(hash_entry:, hal_client:, curie_resolver:, base_url:)
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
