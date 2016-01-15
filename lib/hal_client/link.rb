@@ -92,7 +92,7 @@ class HalClient
       templated? ? template.pattern : target.href
     end
 
-    def resolved_rel
+    def fully_qualified_rel
       curie_resolver.resolve(rel)
     end
 
@@ -105,10 +105,10 @@ class HalClient
     # Otherwise, they are considered unequal
     def ==(other)
       if other.respond_to?(:raw_href) &&
-         other.respond_to?(:resolved_rel) &&
+         other.respond_to?(:fully_qualified_rel) &&
          other.respond_to?(:templated?)
         (raw_href == other.raw_href) &&
-          (resolved_rel == other.resolved_rel) &&
+          (fully_qualified_rel == other.fully_qualified_rel) &&
           (templated? == other.templated?)
       else
         false
@@ -120,7 +120,7 @@ class HalClient
     # Differing Representations or Addressable::Templates with matching hrefs will get matching hash
     # values, since we are using raw_href and not the objects themselves when computing hash
     def hash
-      [resolved_rel, raw_href, templated?].hash
+      [fully_qualified_rel, raw_href, templated?].hash
     end
 
   end
