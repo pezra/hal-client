@@ -177,6 +177,28 @@ class HalClient
       RepresentationSet.new (Array(embedded) + Array(linked))
     end
 
+    def all_links
+      result = Set.new
+      base_url = Addressable::URI.parse(href || "")
+
+      embedded_entries = flatten_section(raw.fetch("_embedded", {}))
+      result.merge(embedded_entries.map do |entry|
+        Link.new_from_embedded_entry(hash_entry: entry,
+                                     hal_client: hal_client,
+                                     curie_resolver: namespaces,
+                                     base_url: base_url)
+      end)
+
+      link_entries = flatten_section(raw.fetch("_links", {}))
+      result.merge(link_entries.map { |entry|
+        Link.new_from_link_entry(hash_entry: entry,
+                                 hal_client: hal_client,
+                                 curie_resolver: namespaces,
+                                 base_url: base_url) })
+
+      result
+    end
+
     # Returns urls of resources related via the specified
     #   link rel or the specified default value.
     #
@@ -280,7 +302,16 @@ class HalClient
     def raw
       if @raw.nil? && @href
         (fail "unable to make requests due to missing hal client") unless hal_client
-        @raw ||= hal_client.get(@href).raw
+
+        response = hal_client.get(@href)
+
+        unless response.is_a?(Representation)
+          error_message = "Response body wasn't a valid HAL document:\n\n"
+          error_message += response.body
+          raise InvalidRepresentationError.new(error_message)
+        end
+
+        @raw ||= response.raw
       end
 
       @raw
@@ -294,6 +325,14 @@ class HalClient
 
     MISSING = Object.new
 
+    def flatten_section(section_hash)
+      section_hash
+        .each_pair
+        .flat_map { |rel, some_link_info|
+          [some_link_info].flatten
+          .map { |a_link_info| { rel: rel, data: a_link_info } }
+      }
+    end
 
     def links
       @links ||= LinksSection.new((raw.fetch("_links"){{}}),
@@ -318,7 +357,7 @@ class HalClient
 
     rescue InvalidRepresentationError => err
       fail InvalidRepresentationError, "/_embedded/#{jpointer_esc(link_rel)} is not a valid representation"
-end
+    end
 
     def linked(link_rel, options, &default_proc)
       default_proc ||= ->(link_rel,_options) {

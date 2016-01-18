@@ -2,8 +2,6 @@ class HalClient
 
   # Encapsulates a "_links" section.
   class LinksSection
-    UNSET = Object.new
-
     # section - json hash for the links section
     # base_url - base URL with which to resolve relative URLs
     def initialize(section, opts={} )

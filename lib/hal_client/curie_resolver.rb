@@ -2,8 +2,7 @@ require 'addressable/template'
 
 class HalClient
 
-  # Expands CURIEs to fully qualified URLs using a set curie
-  # definitions.
+  # Expands CURIEs to fully qualified URLs using a set of curie definitions.
   class CurieResolver
 
     # Initialize new CurieResolver

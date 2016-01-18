@@ -9,14 +9,19 @@ describe HalClient::Representation do
   ,"_links": {
     "self": { "href": "http://example.com/foo" }
     ,"link1": { "href": "http://example.com/bar" }
-    ,"templated_link": { "href": "http://example.com/people{?name}"
+    ,"templated": { "href": "http://example.com/people{?name}"
                 ,"templated": true }
     ,"link3": [{ "href": "http://example.com/link3-a" }
                ,{ "href": "http://example.com/link3-b" }]
+    ,"dup": { "href": "http://example.com/dup" }
   }
   ,"_embedded": {
     "embed1": {
       "_links": { "self": { "href": "http://example.com/baz" }}
+    }
+    ,"dup": {
+      "dupProperty": "foo"
+      ,"_links": { "self": { "href": "http://example.com/dup" }}
     }
   }
 }
@@ -246,7 +251,7 @@ HAL
     end
 
     context "for existent templated link" do
-      subject { repr.related "templated_link", name: "bob" }
+      subject { repr.related "templated", name: "bob" }
       it { should have(1).item }
       it { should include_representation_of "http://example.com/people?name=bob"  }
     end
@@ -264,13 +269,27 @@ HAL
     end
   end
 
+  describe "#all_links" do
+    subject { repr.all_links }
+
+    specify { expect(subject).to include(link1_link) }
+    specify { expect(subject).to_not include(link2_link) }
+
+    specify { expect(subject).to include(templated_link) }
+
+    specify { expect(subject).to include(link3a_link) }
+    specify { expect(subject).to include(link3b_link) }
+
+    specify { expect(subject.any? { |item| item.target['dupProperty'] == 'foo' }).to be true }
+  end
+
   specify { expect(repr.related_hrefs "link1")
       .to contain_exactly "http://example.com/bar" }
   specify { expect(repr.related_hrefs "embed1")
       .to contain_exactly "http://example.com/baz" }
   specify { expect { repr.related_hrefs 'wat' }.to raise_exception KeyError }
 
-  specify { expect(repr.raw_related_hrefs("templated_link").map(&:pattern))
+  specify { expect(repr.raw_related_hrefs("templated").map(&:pattern))
       .to contain_exactly "http://example.com/people{?name}" }
   specify { expect(repr.raw_related_hrefs("link1"))
       .to contain_exactly "http://example.com/bar" }
@@ -395,6 +414,41 @@ HAL
   end
 
   # Background
+
+  let(:link1_repr) do
+    HalClient::Representation.new(hal_client: a_client, href: "http://example.com/bar")
+  end
+
+  let(:link3a_repr) do
+    HalClient::Representation.new(hal_client: a_client, href: "http://example.com/link3-a")
+  end
+
+  let(:link3b_repr) do
+    HalClient::Representation.new(hal_client: a_client, href: "http://example.com/link3-b")
+  end
+
+
+  let(:link1_link) do
+    HalClient::Link.new(rel: 'link1', target: link1_repr)
+  end
+
+  let(:link2_link) do
+    HalClient::Link.new(rel: 'link2', target: link1_repr)
+  end
+
+  let(:templated_link) do
+    HalClient::Link.new(rel: 'templated',
+                        template: Addressable::Template.new('http://example.com/people{?name}'))
+  end
+
+  let(:link3a_link) do
+    HalClient::Link.new(rel: 'link3', target: link3a_repr)
+  end
+
+  let(:link3b_link) do
+    HalClient::Link.new(rel: 'link3', target: link3b_repr)
+  end
+
 
   let(:a_client) { HalClient.new }
   let!(:bar_request) { stub_identity_request("http://example.com/bar") }
