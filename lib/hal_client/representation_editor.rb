@@ -29,6 +29,18 @@ class HalClient
       @orig_repr = a_representation
       @raw = raw
     end
+    protected :initialize
+
+    attr_reader :raw
+
+    # Returns true if this, or any previous, editor actually changed the hal
+    # representation.
+    def dirty?
+      new_repr = Representation.new(parsed_json: raw)
+
+      orig_repr.properties != new_repr.properties ||
+        orig_repr.all_links != new_repr.all_links
+    end
 
     # Returns the raw json representation of this representation
     def to_json
@@ -126,7 +138,7 @@ class HalClient
 
     protected
 
-    attr_reader :orig_repr, :raw
+    attr_reader :orig_repr
 
     def Array(thing)
       if Hash === thing
