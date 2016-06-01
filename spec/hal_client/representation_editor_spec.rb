@@ -13,6 +13,12 @@ RSpec.describe HalClient::RepresentationEditor do
   specify { expect(subject.to_hal).to be_equivalent_json_to raw_hal }
   specify { expect(subject.to_json).to be_equivalent_json_to raw_hal }
 
+  describe "#raw" do
+    it "returns parsed json representation of the altered HAL document" do
+      expect( subject.raw ).to eq a_repr.raw
+    end
+  end
+
   describe "#reject_links" do
     specify { expect(subject.reject_links("up")).not_to have_link "up" }
 
@@ -122,6 +128,52 @@ RSpec.describe HalClient::RepresentationEditor do
         .to have_link "related", with_href("http://example.com/third{?wat}")
                                  .and(be_templated)
     end
+  end
+
+  describe "#dirty?" do
+    specify "unchanged editors are clean" do
+      expect(subject.dirty?).to be false
+    end
+
+    specify "changing a property makes it dirty" do
+      expect(
+        subject.set_property("age", 11).dirty?
+      ).to be true
+    end
+
+    specify "setting a property to the existing value leaves it clean" do
+      expect(
+        subject.set_property("age", 10).dirty?
+      ).to be false
+    end
+
+    specify "removing a link makes it dirty" do
+      expect(
+        subject.reject_links("up").dirty?
+      ).to be true
+    end
+
+    specify "adding a link makes it dirty" do
+      expect(
+        subject.add_link("up", "http://example.com/new").dirty?
+      ).to be true
+    end
+
+    specify "removing and readding an existing link leaves it clean" do
+      expect(
+        subject
+          .reject_links("about")
+          .add_link("about", "http://example.com/another")
+          .dirty?
+      ).to be false
+    end
+
+    specify "removing a embedded makes it dirty" do
+      expect(
+        subject.reject_related("replies").dirty?
+      ).to be true
+    end
+
   end
 
   # Background
