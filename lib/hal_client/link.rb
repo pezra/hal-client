@@ -87,8 +87,8 @@ class HalClient
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
 
-      absolute_href = (base_url + hash_data['_links']['self']['href']).to_s
-      hash_data['_links']['self']['href'] = absolute_href
+      explicit_url = self_href(hash_data)
+      hash_data['_links']['self']['href'] = (base_url + explicit_url).to_s if explicit_url
 
       Link.new(rel: rel,
                target: Representation.new(hal_client: hal_client, parsed_json: hash_data),
@@ -133,5 +133,14 @@ class HalClient
       [fully_qualified_rel, raw_href, templated?].hash
     end
 
+
+    protected
+
+    def self.self_href(embedded_repr)
+      embedded_repr
+        .fetch('_links', {})
+        .fetch('self', {})
+        .fetch('href', nil)
+    end
   end
 end
