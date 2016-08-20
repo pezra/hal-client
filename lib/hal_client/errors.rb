@@ -20,4 +20,6 @@ class HalClient
 
   # Server responded with a 5xx status code
   HttpServerError = Class.new(HttpError)
+
+  TimeoutError = Class.new(StandardError)
 end

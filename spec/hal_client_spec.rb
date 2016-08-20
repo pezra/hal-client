@@ -86,6 +86,34 @@ describe HalClient do
         expect(logger.info_entries.first).to include "http://example.com/foo"
       end
     end
+
+  end
+
+  context "server takes too long" do
+    let!(:request) { stub_request(:any, "http://example.com/foo")
+                     .with { sleep 1 }  }
+
+    subject(:client) { HalClient.new timeout: 0.1 }
+
+    it "#get raises TimeoutError" do
+      expect{client.get "http://example.com/foo"}.to raise_exception HalClient::TimeoutError
+    end
+
+    it "#get includes url and verb in the error message" do
+      err = client.get("http://example.com/foo") rescue $!
+      expect(err.to_s).to include "GET <http://example.com/foo>"
+    end
+
+    it "#post raises HttpClientError" do
+      expect{client.post "http://example.com/foo", "foo"}.to raise_exception HalClient::TimeoutError
+    end
+
+    it "#post attaches response to the raise error" do
+      err = client.post("http://example.com/foo", "") rescue $!
+      expect(err.to_s).to include "POST <http://example.com/foo>"
+    end
+
+
   end
 
   context "server responds with client error" do
