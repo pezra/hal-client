@@ -32,15 +32,18 @@ class HalClient
   #     the authorization header
   #   :headers - a hash of other headers to send on each request.
   #   :base_client - An HTTP::Client object to use.
-  #   :logger - a Logger object to which benchmark and activity info 
+  #   :logger - a Logger object to which benchmark and activity info
   #      will be written. Benchmark data will be written at info level
   #      and activity at debug level.
+  #   :timeout - number of seconds that after which any request will be
+  #      terminated and an exception raised. Default: Float::INFINITY
   def initialize(options={})
     @default_message_request_headers = HTTP::Headers.new
     @default_entity_request_headers = HTTP::Headers.new
     @auth_helper = as_callable(options.fetch(:authorization, NullAuthHelper))
     @base_client ||= options[:base_client]
     @logger = options.fetch(:logger, NullLogger.new)
+    @timeout = options.fetch(:timeout, Float::INFINITY)
 
     default_message_request_headers.set('Accept', options[:accept]) if
       options[:accept]
@@ -79,7 +82,7 @@ class HalClient
   def get(url, headers={})
     headers = auth_headers(url).merge(headers)
     client = client_for_get(override_headers: headers)
-    resp = benchmark("GET <#{url}>") { client.get(url) }
+    resp = bmtb("GET <#{url}>") { client.get(url) }
     interpret_response resp
 
   rescue HttpError => e
@@ -105,7 +108,7 @@ class HalClient
 
         begin
           client = client_for_post(override_headers: headers)
-          resp = benchmark("#{verb} <#{url}>") { client.request(method, url, body: req_body) }
+          resp = bmtb("#{verb} <#{url}>") { client.request(method, url, body: req_body) }
           interpret_response resp
 
         rescue HttpError => e
@@ -145,7 +148,7 @@ class HalClient
 
     begin
       client = client_for_post(override_headers: headers)
-      resp = benchmark("DELETE <#{url}>") { client.request(:delete, url) }
+      resp = bmtb("DELETE <#{url}>") { client.request(:delete, url) }
       interpret_response resp
     rescue HttpError => e
       fail e.class.new("DELETE <#{url}> failed with code #{e.response.status}", e.response)
@@ -154,7 +157,7 @@ class HalClient
 
   protected
 
-  attr_reader :headers, :auth_helper, :logger
+  attr_reader :headers, :auth_helper, :logger, :timeout
 
   NullAuthHelper = ->(_url) { nil }
 
@@ -262,6 +265,21 @@ class HalClient
     [:content_type, /^content-type$/i].any?{|pat| pat === field_name}
   end
 
+  def bmtb(msg, &blk)
+    benchmark(msg) { timebox(msg, &blk) }
+  end
+
+  def timebox(msg, &blk)
+    if timeout < Float::INFINITY
+      Timeout.timeout(timeout, &blk)
+    else
+      yield
+    end
+
+  rescue Timeout::Error
+    timeout_ms = timeout * 1000
+    raise TimeoutError, "Killed %s for taking more than %.1fms." % [msg, timeout_ms]
+  end
   def benchmark(msg, &blk)
     result = nil
     elapsed = Benchmark.realtime do
