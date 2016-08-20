@@ -140,12 +140,6 @@ class HalClient
     end
   end
 
-  class << self
-    def delete(url, headers={})
-      new.delete(url, headers)
-    end
-  end
-
   protected
 
   attr_reader :headers, :auth_helper
@@ -273,6 +267,24 @@ class HalClient
     def post(url, data, options={})
       default_client.post(url, data, options)
     end
+
+    # Patch a `Representation` or `String` to the resource identified at `url`.
+    #
+    # url - The URL of the resource of interest.
+    # data - a `String` or an object that responds to `#to_hal`
+    # options - set of options to pass to `RestClient#get`
+    def patch(url, data, options={})
+      default_client.patch(url, data, options)
+    end
+
+    # Delete the resource identified at `url`.
+    #
+    # url - The URL of the resource of interest.
+    # options - set of options to pass to `RestClient#get`
+    def delete(url, options={})
+      default_client.delete(url, options)
+    end
+
 
     protected
 
