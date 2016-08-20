@@ -77,6 +77,15 @@ describe HalClient do
         expect(request.with(headers: { "DummyHeader" => "Test" })).to have_been_made
       end
     end
+
+    context "logging" do
+      let(:logger) { MemoryLogger.new }
+      subject(:client) { HalClient.new logger: logger }
+      it "logs the request" do
+        expect(logger.info_entries).to have(1).item
+        expect(logger.info_entries.first).to include "http://example.com/foo"
+      end
+    end
   end
 
   context "server responds with client error" do
@@ -233,6 +242,16 @@ describe HalClient do
         expect(post_request).to have_been_made
       end
     end
+
+    context "logging" do
+      before do return_val end
+      let(:logger) { MemoryLogger.new }
+      subject(:client) { HalClient.new logger: logger }
+      it "logs the request" do
+        expect(logger.info_entries).to have(1).item
+        expect(logger.info_entries.first).to include "http://example.com/foo"
+      end
+    end
   end
 
   describe ".post(<url>)" do
@@ -298,5 +317,24 @@ describe HalClient do
     to_return body: "{}" }
 
   let!(:request) { stub_request(:get, "http://example.com/foo").
-    to_return body: "{}" }
+                   to_return body: "{}" }
+
+  class MemoryLogger
+    def info_entries
+      @info_entries ||= []
+    end
+    def debug_entries
+      @debug_entries ||= []
+    end
+
+    def info(msg=nil)
+      msg = yield if block_given?
+      info_entries << msg
+    end
+
+    def debug(msg=nil)
+      msg = yield if block_given?
+      debug_entries << msg
+    end
+  end
 end
