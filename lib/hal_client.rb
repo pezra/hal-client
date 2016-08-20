@@ -1,6 +1,7 @@
 require "hal_client/version"
 require 'http'
 require 'multi_json'
+require 'benchmark'
 
 # Adapter used to access resources.
 class HalClient
@@ -31,11 +32,15 @@ class HalClient
   #     the authorization header
   #   :headers - a hash of other headers to send on each request.
   #   :base_client - An HTTP::Client object to use.
+  #   :logger - a Logger object to which benchmark and activity info 
+  #      will be written. Benchmark data will be written at info level
+  #      and activity at debug level.
   def initialize(options={})
     @default_message_request_headers = HTTP::Headers.new
     @default_entity_request_headers = HTTP::Headers.new
     @auth_helper = as_callable(options.fetch(:authorization, NullAuthHelper))
     @base_client ||= options[:base_client]
+    @logger = options.fetch(:logger, NullLogger.new)
 
     default_message_request_headers.set('Accept', options[:accept]) if
       options[:accept]
@@ -65,6 +70,7 @@ class HalClient
     default_message_request_headers.set('Accept', accept_values.join(", "))
     # We can work with HAL so provide a back stop accept.
   end
+  protected :initialize
 
   # Returns a `Representation` of the resource identified by `url`.
   #
@@ -72,7 +78,9 @@ class HalClient
   # headers - custom header fields to use for this request
   def get(url, headers={})
     headers = auth_headers(url).merge(headers)
-    interpret_response client_for_get(override_headers: headers).get(url)
+    client = client_for_get(override_headers: headers)
+    resp = benchmark("GET <#{url}>") { client.get(url) }
+    interpret_response resp
 
   rescue HttpError => e
     fail e.class.new("GET <#{url}> failed with code #{e.response.status}", e.response)
@@ -82,6 +90,8 @@ class HalClient
     protected
 
     def def_unsafe_request(method)
+      verb = method.to_s.upcase
+
       define_method(method) do |url, data, headers={}|
         headers = auth_headers(url).merge(headers)
 
@@ -94,11 +104,12 @@ class HalClient
                    end
 
         begin
-          interpret_response client_for_post(override_headers: headers)
-                              .request(method, url, body: req_body)
+          client = client_for_post(override_headers: headers)
+          resp = benchmark("#{verb} <#{url}>") { client.request(method, url, body: req_body) }
+          interpret_response resp
 
         rescue HttpError => e
-          fail e.class.new("#{method.to_s.upcase} <#{url}> failed with code #{e.response.status}", e.response)
+          fail e.class.new("#{verb} <#{url}> failed with code #{e.response.status}", e.response)
         end
       end
     end
@@ -133,22 +144,17 @@ class HalClient
     headers = auth_headers(url).merge(headers)
 
     begin
-      interpret_response client_for_post(override_headers: headers)
-                          .request(:delete, url)
+      client = client_for_post(override_headers: headers)
+      resp = benchmark("DELETE <#{url}>") { client.request(:delete, url) }
+      interpret_response resp
     rescue HttpError => e
       fail e.class.new("DELETE <#{url}> failed with code #{e.response.status}", e.response)
     end
   end
 
-  class << self
-    def delete(url, headers={})
-      new.delete(url, headers)
-    end
-  end
-
   protected
 
-  attr_reader :headers, :auth_helper
+  attr_reader :headers, :auth_helper, :logger
 
   NullAuthHelper = ->(_url) { nil }
 
@@ -248,6 +254,18 @@ class HalClient
     [:content_type, /^content-type$/i].any?{|pat| pat === field_name}
   end
 
+  def benchmark(msg, &blk)
+    result = nil
+    elapsed = Benchmark.realtime do
+      result = yield
+    end
+
+    logger.info '%s (%.1fms)' % [ msg, elapsed*1000 ]
+
+    result
+  end
+
+
   module EntryPointCovenienceMethods
     # Returns a `Representation` of the resource identified by `url`.
     #
@@ -266,6 +284,24 @@ class HalClient
       default_client.post(url, data, options)
     end
 
+    # Patch a `Representation` or `String` to the resource identified at `url`.
+    #
+    # url - The URL of the resource of interest.
+    # data - a `String` or an object that responds to `#to_hal`
+    # options - set of options to pass to `RestClient#get`
+    def patch(url, data, options={})
+      default_client.patch(url, data, options)
+    end
+
+    # Delete the resource identified at `url`.
+    #
+    # url - The URL of the resource of interest.
+    # options - set of options to pass to `RestClient#get`
+    def delete(url, options={})
+      default_client.delete(url, options)
+    end
+
+
     protected
 
     def default_client
@@ -274,4 +310,9 @@ class HalClient
   end
   extend EntryPointCovenienceMethods
 
+
+  class NullLogger
+    def info(*_); end
+    def debug(*_); end
+  end
 end
