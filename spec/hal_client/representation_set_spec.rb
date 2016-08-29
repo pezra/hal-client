@@ -2,7 +2,7 @@ require 'hal_client'
 require 'hal_client/representation'
 require 'hal_client/representation_set'
 
-describe HalClient::RepresentationSet do
+RSpec.describe HalClient::RepresentationSet do
   describe "#new" do
     let!(:return_val) { described_class.new([foo_repr, bar_repr]) }
     it { is_expected.to be_kind_of described_class }

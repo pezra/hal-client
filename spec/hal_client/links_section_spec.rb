@@ -1,6 +1,6 @@
 require 'hal-client'
 
-describe HalClient::LinksSection, "namespaces embedded" do
+RSpec.describe HalClient::LinksSection, "namespaces embedded" do
   subject(:section) {
     described_class.new(raw_section,
                         base_url: Addressable::URI.parse("http://example.com/foo"))
@@ -55,7 +55,7 @@ describe HalClient::LinksSection, "namespaces embedded" do
   end
 end
 
-describe HalClient::LinksSection, "invalid" do
+RSpec.describe HalClient::LinksSection, "invalid" do
   subject(:section) {
     described_class.new(raw_section,
                         base_url: Addressable::URI.parse("http://example.com/"))

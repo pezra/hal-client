@@ -1,6 +1,6 @@
 require 'hal_client/collection'
 
-describe HalClient::Collection do
+RSpec.describe HalClient::Collection do
   # BACKGROUND
 
   shared_context "multi-item, multi-page" do

@@ -35,8 +35,7 @@ RSpec.configure do |config|
 
   # Limits the available syntax to the non-monkey patched syntax that is
   # recommended.
-  # -- Disabled for now, specs still need this
-  #config.disable_monkey_patching!
+  config.disable_monkey_patching!
 
   # This setting enables warnings. It's recommended, but in some cases may
   # be too noisy due to issues in dependencies.

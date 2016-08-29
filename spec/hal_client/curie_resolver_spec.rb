@@ -1,6 +1,6 @@
 require 'hal_client/curie_resolver'
 
-describe HalClient::CurieResolver do
+RSpec.describe HalClient::CurieResolver do
   describe "#new" do
     it "takes an array of curie definitions" do
       expect(described_class.new([f_ns, b_ns])).to be_kind_of described_class

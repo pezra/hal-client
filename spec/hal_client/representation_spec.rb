@@ -1,6 +1,6 @@
 require "hal_client/representation"
 
-describe HalClient::Representation do
+RSpec.describe HalClient::Representation do
   let(:raw_repr) { <<-HAL }
 { "prop1": 1
   ,"prop2": 2
@@ -471,7 +471,7 @@ HAL
 
 end
 
-describe HalClient::Representation, "w/o hal_client" do
+RSpec.describe HalClient::Representation, "w/o hal_client" do
   subject(:repr) { described_class.new(parsed_json: MultiJson.load(raw_repr)) }
 
   specify { expect(subject.href).to eq "http://example.com/foo" }
