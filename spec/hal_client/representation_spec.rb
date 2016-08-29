@@ -409,8 +409,8 @@ HAL
   end
 
   context "non-collection" do
-    specify { expect{repr.as_enum}.to raise_error }
-    specify { expect{repr.to_enum}.to raise_error }
+    specify { expect{repr.as_enum}.to raise_error(HalClient::NotACollectionError) }
+    specify { expect{repr.to_enum}.to raise_error(HalClient::NotACollectionError) }
   end
 
   # Background
