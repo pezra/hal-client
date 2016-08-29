@@ -355,7 +355,7 @@ class HalClient
 
       (boxed relations).map{|it| Representation.new hal_client: hal_client, parsed_json: it}
 
-    rescue InvalidRepresentationError => err
+    rescue InvalidRepresentationError
       fail InvalidRepresentationError, "/_embedded/#{jpointer_esc(link_rel)} is not a valid representation"
     end
 
@@ -376,7 +376,7 @@ class HalClient
           end }
         .map {|href| Representation.new href: href, hal_client: hal_client }
 
-    rescue InvalidRepresentationError => err
+    rescue InvalidRepresentationError
       fail InvalidRepresentationError, "/_links/#{jpointer_esc(link_rel)} is not a valid link"
     end
 
