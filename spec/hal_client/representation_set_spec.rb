@@ -1,5 +1,3 @@
-require_relative '../spec_helper'
-
 require 'hal_client'
 require 'hal_client/representation'
 require 'hal_client/representation_set'

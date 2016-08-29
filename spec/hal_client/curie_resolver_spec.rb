@@ -1,5 +1,3 @@
-require_relative "../spec_helper"
-
 require 'hal_client/curie_resolver'
 
 describe HalClient::CurieResolver do
