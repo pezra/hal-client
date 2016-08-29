@@ -1,4 +1,3 @@
-require "spec_helper"
 require 'hal-client'
 
 describe HalClient::LinksSection, "namespaces embedded" do
@@ -21,7 +20,7 @@ describe HalClient::LinksSection, "namespaces embedded" do
 
   specify { expect(section.hrefs(fully_qualified_second_rel))
             .to contain_exactly "http://example.com/bar", "http://example.com/baz" }
-  
+
   specify { expect(section.hrefs("ns2:second"))
     .to contain_exactly "http://example.com/bar", "http://example.com/baz" }
 
