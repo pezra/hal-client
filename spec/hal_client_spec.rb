@@ -1,6 +1,6 @@
 require "hal_client"
 
-describe HalClient do
+RSpec.describe HalClient do
   describe ".new()" do
     subject { HalClient.new }
     it { is_expected.to be_kind_of HalClient }
