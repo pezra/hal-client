@@ -4,14 +4,14 @@ require "hal_client"
 describe HalClient do
   describe ".new()" do
     subject { HalClient.new }
-    it { should be_kind_of HalClient }
+    it { is_expected.to be_kind_of HalClient }
   end
 
   subject(:client) { HalClient.new }
 
   describe '.new w/ custom accept' do
     subject { HalClient.new(accept: "application/vnd.myspecialmediatype") }
-    it { should be_kind_of HalClient }
+    it { is_expected.to be_kind_of HalClient }
   end
 
   describe "#get(<url>)" do
@@ -24,7 +24,7 @@ describe HalClient do
 
     describe "request" do
       subject { request }
-      it("should have been made") { should have_been_made }
+      it("should have been made") { is_expected.to have_been_made }
 
       it "sends accept header" do
         expect(request.with(headers: {'Accept' => /application\/hal\+json/i})).
@@ -173,7 +173,7 @@ describe HalClient do
 
     describe "request" do
       subject { request }
-      it("should have been made") { should have_been_made }
+      it("should have been made") { is_expected.to have_been_made }
 
       it "sends accept header" do
         expect(request.with(headers: {'Accept' => /application\/hal\+json/})).
@@ -211,7 +211,7 @@ describe HalClient do
     describe "request" do
       before do return_val end
       subject { post_request }
-      it("should have been made") { should have_been_made }
+      it("should have been made") { is_expected.to have_been_made }
 
       it "sends content type header" do
         expect(post_request.with(headers: {'Content-Type' => 'application/hal+json'})).
@@ -223,7 +223,7 @@ describe HalClient do
       let(:return_val) { client.post url, post_data, "Content-Type" => "text/plain" }
       before do return_val end
       subject { post_request }
-      it("should have been made") { should have_been_made }
+      it("should have been made") { is_expected.to have_been_made }
 
       it "sends content type header" do
         expect(post_request.with(headers: {'Content-Type' => 'text/plain'})).
@@ -291,7 +291,7 @@ describe HalClient do
 
     describe "request" do
       subject { post_request }
-      it("should have been made") { should have_been_made }
+      it("should have been made") { is_expected.to have_been_made }
 
       it "sends accept header" do
         expect(post_request.with(headers: {'Content-Type' => 'application/hal+json'})).

@@ -176,12 +176,12 @@ HAL
   describe "#fetch" do
     context "for existent property" do
       subject { repr.fetch "prop1" }
-      it { should eq 1 }
+      it { is_expected.to eq 1 }
     end
 
     context "for existent link" do
       subject { repr.fetch "link1" }
-      it { should have(1).item }
+      it { is_expected.to have(1).item }
       it "includes related resource representation" do
         expect(subject.first.href).to eq "http://example.com/bar"
       end
@@ -189,7 +189,7 @@ HAL
 
     context "for existent embedded" do
       subject { repr.fetch "embed1" }
-      it { should have(1).item }
+      it { is_expected.to have(1).item }
       it "includes related resource representation" do
         expect(subject.first.href).to eq "http://example.com/baz"
       end
@@ -203,63 +203,63 @@ HAL
 
     context "non-existent item w/ default value" do
       subject { repr.fetch "wat", "whatevs" }
-      it { should eq "whatevs" }
+      it { is_expected.to eq "whatevs" }
     end
 
     context "non-existent item w/ default value generator" do
       subject { repr.fetch("wat"){|key| key+"gen" } }
-      it { should eq "watgen" }
+      it { is_expected.to eq "watgen" }
     end
   end
 
   describe "#[]" do
     context "for existent property" do
       subject { repr["prop1"] }
-      it { should eq 1 }
+      it { is_expected.to eq 1 }
     end
 
     context "for existent link" do
       subject { repr["link1"] }
-      it { should have(1).item }
-      it { should include_representation_of "http://example.com/bar" }
+      it { is_expected.to have(1).item }
+      it { is_expected.to include_representation_of "http://example.com/bar" }
     end
 
     context "for existent embedded" do
       subject { repr["embed1"] }
-      it { should have(1).item }
-      it { should include_representation_of "http://example.com/baz" }
+      it { is_expected.to have(1).item }
+      it { is_expected.to include_representation_of "http://example.com/baz" }
     end
 
     context "non-existent item w/o default" do
       subject { repr["wat"] }
-      it { should be_nil }
+      it { is_expected.to be_nil }
     end
   end
 
   describe "#related" do
     context "for existent link" do
       subject { repr.related "link1" }
-      it { should have(1).item }
-      it { should include_representation_of "http://example.com/bar" }
+      it { is_expected.to have(1).item }
+      it { is_expected.to include_representation_of "http://example.com/bar" }
     end
 
     context "for existent compound link" do
       subject { repr.related "link3" }
-      it { should have(2).item }
-      it { should include_representation_of "http://example.com/link3-a" }
-      it { should include_representation_of "http://example.com/link3-b" }
+      it { is_expected.to have(2).item }
+      it { is_expected.to include_representation_of "http://example.com/link3-a" }
+      it { is_expected.to include_representation_of "http://example.com/link3-b" }
     end
 
     context "for existent templated link" do
       subject { repr.related "templated", name: "bob" }
-      it { should have(1).item }
-      it { should include_representation_of "http://example.com/people?name=bob"  }
+      it { is_expected.to have(1).item }
+      it { is_expected.to include_representation_of "http://example.com/people?name=bob"  }
     end
 
     context "for existent embedded" do
       subject { repr.related "embed1" }
-      it { should have(1).item }
-      it { should include_representation_of "http://example.com/baz" }
+      it { is_expected.to have(1).item }
+      it { is_expected.to include_representation_of "http://example.com/baz" }
     end
 
     context "non-existent item w/o default" do
@@ -319,17 +319,17 @@ HAL
 
     describe "#related return value" do
       subject(:return_val) { repr.related("http://example.com/rels/bar") }
-      it { should include_representation_of "http://example.com/bar" }
+      it { is_expected.to include_representation_of "http://example.com/bar" }
     end
 
     describe "#[] return value" do
       subject(:return_val) { repr["http://example.com/rels/bar"] }
-      it { should include_representation_of "http://example.com/bar" }
+      it { is_expected.to include_representation_of "http://example.com/bar" }
     end
 
     describe "#related_hrefs return value" do
       subject(:return_val) { repr.related_hrefs("http://example.com/rels/bar") }
-      it { should include "http://example.com/bar" }
+      it { is_expected.to include "http://example.com/bar" }
     end
   end
 
@@ -347,17 +347,17 @@ HAL
 
     describe "#related return value " do
       subject(:return_val) { repr.related("http://example.com/rels/embed1") }
-      it { should include_representation_of "http://example.com/embed1" }
+      it { is_expected.to include_representation_of "http://example.com/embed1" }
     end
 
     describe "#[] return value " do
       subject(:return_val) { repr["http://example.com/rels/embed1"] }
-      it { should include_representation_of "http://example.com/embed1" }
+      it { is_expected.to include_representation_of "http://example.com/embed1" }
     end
 
     describe "#related_hrefs return value " do
       subject(:return_val) { repr.related_hrefs("http://example.com/rels/embed1") }
-      it { should include "http://example.com/embed1" }
+      it { is_expected.to include "http://example.com/embed1" }
     end
   end
 
