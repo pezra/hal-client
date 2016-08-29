@@ -185,7 +185,7 @@ class HalClient
       begin
         Representation.new(hal_client: self, parsed_json: MultiJson.load(resp.to_s),
                            href: location)
-      rescue MultiJson::ParseError, InvalidRepresentationError => e
+      rescue MultiJson::ParseError, InvalidRepresentationError
         if location
           # response doesn't have a HAL body but we know what resource
           # was created so we can be helpful.
