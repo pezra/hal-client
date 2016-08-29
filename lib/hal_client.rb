@@ -249,10 +249,6 @@ class HalClient
       default_message_request_headers.merge(default_entity_request_headers)
   end
 
-  def default_entity_request_headers
-    @default_entity_request_headers
-  end
-
   def entity_header_field?(field_name)
     [:content_type, /^content-type$/i].any?{|pat| pat === field_name}
   end
