@@ -15,6 +15,20 @@ class HalClient
     # https://tools.ietf.org/html/draft-kelly-json-hal-07#section-4.1
     RESERVED_PROPERTIES = ['_links', '_embedded'].freeze
 
+    NO_RELATED_RESOURCE = ->(link_rel) {
+      raise KeyError, "No resources are related via `#{link_rel}`"
+    }
+
+    NO_EMBED_FOUND = ->(link_rel) {
+      raise KeyError, "#{link_rel} embed not found"
+    }
+
+    NO_LINK_FOUND = ->(link_rel, _options) {
+      raise KeyError, "#{link_rel} link not found"
+    }
+
+    private_constant :NO_RELATED_RESOURCE, :NO_EMBED_FOUND, :NO_LINK_FOUND
+
     # Create a new Representation
     #
     # options - name parameters
@@ -166,9 +180,7 @@ class HalClient
     # Raises KeyError if the specified link does not exist
     #   and no default_proc is provided.
     def related(link_rel, options = {}, &default_proc)
-      default_proc ||= ->(link_rel){
-        raise KeyError, "No resources are related via `#{link_rel}`"
-      }
+      default_proc ||= NO_RELATED_RESOURCE
 
       embedded = embedded(link_rel) { nil }
       linked = linked(link_rel, options) { nil }
@@ -231,9 +243,7 @@ class HalClient
     # Raises KeyError if the specified link does not exist
     #   and no default_proc is provided.
     def raw_related_hrefs(link_rel, &default_proc)
-      default_proc ||= ->(link_rel){
-        raise KeyError, "No resources are related via `#{link_rel}`"
-      }
+      default_proc ||= NO_RELATED_RESOURCE
 
       embedded = embedded(link_rel) { nil }
       linked = links.hrefs(link_rel) { nil }
@@ -346,9 +356,7 @@ class HalClient
     end
 
     def embedded(link_rel, &default_proc)
-      default_proc ||= ->(link_rel) {
-        fail KeyError, "#{link_rel} embed not found"
-      }
+      default_proc ||= NO_EMBED_FOUND
 
       relations = embedded_section.fetch(link_rel) { MISSING }
       return default_proc.call(link_rel) if relations == MISSING
@@ -360,9 +368,7 @@ class HalClient
     end
 
     def linked(link_rel, options, &default_proc)
-      default_proc ||= ->(link_rel,_options) {
-        fail KeyError, "#{link_rel} link not found"
-      }
+      default_proc ||= NO_LINK_FOUND
 
       relations = links.hrefs(link_rel) { MISSING }
       return default_proc.call(link_rel, options) if relations == MISSING

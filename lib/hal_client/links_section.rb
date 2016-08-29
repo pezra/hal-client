@@ -2,6 +2,13 @@ class HalClient
 
   # Encapsulates a "_links" section.
   class LinksSection
+
+    NO_RELATED_RESOURCE = ->(link_rel) {
+      raise KeyError, "No resources are related via `#{link_rel}`"
+    }
+
+    private_constant :NO_RELATED_RESOURCE
+
     # section - json hash for the links section
     # base_url - base URL with which to resolve relative URLs
     def initialize(section, opts={} )
@@ -27,9 +34,7 @@ class HalClient
     # Raises KeyError if the specified link_rel is not present and no
     # default_value or default_proc are provided.
     def hrefs(link_rel, &default_proc)
-      default_proc ||= ->(link_rel){
-        raise KeyError, "No resources are related via `#{link_rel}`"
-      }
+      default_proc ||= NO_RELATED_RESOURCE
 
       return default_proc.call(link_rel) unless section.key? link_rel
 
