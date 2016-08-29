@@ -81,7 +81,7 @@ describe HalClient::Collection do
     context do
       include_context "multi-item, multi-page"
 
-      specify { expect { collection.count }.to raise_exception }
+      specify { expect { collection.count }.to raise_exception(NotImplementedError) }
     end
   end
 
