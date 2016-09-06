@@ -1,7 +1,6 @@
-require "spec_helper"
 require 'hal-client'
 
-describe HalClient::LinksSection, "namespaces embedded" do
+RSpec.describe HalClient::LinksSection, "namespaces embedded" do
   subject(:section) {
     described_class.new(raw_section,
                         base_url: Addressable::URI.parse("http://example.com/foo"))
@@ -21,7 +20,7 @@ describe HalClient::LinksSection, "namespaces embedded" do
 
   specify { expect(section.hrefs(fully_qualified_second_rel))
             .to contain_exactly "http://example.com/bar", "http://example.com/baz" }
-  
+
   specify { expect(section.hrefs("ns2:second"))
     .to contain_exactly "http://example.com/bar", "http://example.com/baz" }
 
@@ -56,7 +55,7 @@ describe HalClient::LinksSection, "namespaces embedded" do
   end
 end
 
-describe HalClient::LinksSection, "invalid" do
+RSpec.describe HalClient::LinksSection, "invalid" do
   subject(:section) {
     described_class.new(raw_section,
                         base_url: Addressable::URI.parse("http://example.com/"))

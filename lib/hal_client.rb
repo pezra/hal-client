@@ -185,7 +185,7 @@ class HalClient
       begin
         Representation.new(hal_client: self, parsed_json: MultiJson.load(resp.to_s),
                            href: location)
-      rescue MultiJson::ParseError, InvalidRepresentationError => e
+      rescue MultiJson::ParseError, InvalidRepresentationError
         if location
           # response doesn't have a HAL body but we know what resource
           # was created so we can be helpful.
@@ -247,10 +247,6 @@ class HalClient
   def default_entity_and_message_request_headers
     @default_entity_and_message_request_headers ||=
       default_message_request_headers.merge(default_entity_request_headers)
-  end
-
-  def default_entity_request_headers
-    @default_entity_request_headers
   end
 
   def entity_header_field?(field_name)

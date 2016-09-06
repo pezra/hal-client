@@ -1,8 +1,6 @@
-require_relative "../spec_helper"
-
 require 'hal_client/collection'
 
-describe HalClient::Collection do
+RSpec.describe HalClient::Collection do
   # BACKGROUND
 
   shared_context "multi-item, multi-page" do
@@ -81,7 +79,7 @@ describe HalClient::Collection do
     context do
       include_context "multi-item, multi-page"
 
-      specify { expect { collection.count }.to raise_exception }
+      specify { expect { collection.count }.to raise_exception(NotImplementedError) }
     end
   end
 

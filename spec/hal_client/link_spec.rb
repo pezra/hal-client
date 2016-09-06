@@ -1,10 +1,8 @@
 require 'hal-client'
 
-require_relative "../spec_helper"
-
 require "hal_client/link"
 
-describe HalClient::Link do
+RSpec.describe HalClient::Link do
 
   subject(:link) { described_class.new(rel: rel_1, target: repr_1) }
 
