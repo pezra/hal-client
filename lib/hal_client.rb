@@ -216,9 +216,9 @@ class HalClient
     override_headers = options[:override_headers]
 
     if !override_headers
-      @client_for_get ||= base_client.with_headers(default_message_request_headers)
+      @client_for_get ||= with_headers(base_client, default_message_request_headers)
     else
-      client_for_get.with_headers(override_headers)
+      with_headers(client_for_get, override_headers)
     end
   end
 
@@ -231,9 +231,17 @@ class HalClient
 
     if !override_headers
       @client_for_post ||=
-        base_client.with_headers(default_entity_and_message_request_headers)
+        with_headers(base_client, default_entity_and_message_request_headers)
     else
-      client_for_post.with_headers(override_headers)
+      with_headers(client_for_post, override_headers)
+    end
+  end
+
+  def with_headers(client, headers)
+    if defined?(HTTP) && defined?(HTTP::VERSION) && HTTP::VERSION >= '1.0.0'
+      client.headers(headers)
+    else
+      client.with_headers(headers)
     end
   end
 
