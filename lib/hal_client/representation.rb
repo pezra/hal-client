@@ -159,7 +159,7 @@ class HalClient
     #
     # link_rel - The link rel of interest
     def related?(link_rel)
-      !!(linked(link_rel, {}) { nil } || embedded(link_rel) { nil })
+      !!(linked(link_rel, {}) { false } || embedded(link_rel) { false })
     end
     alias_method :has_related?, :related?
 
