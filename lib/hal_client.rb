@@ -44,6 +44,7 @@ class HalClient
     @base_client ||= options[:base_client]
     @logger = options.fetch(:logger, NullLogger.new)
     @timeout = options.fetch(:timeout, Float::INFINITY)
+    @base_client_with_headers = {}
 
     default_message_request_headers.set('Accept', options[:accept]) if
       options[:accept]
@@ -213,13 +214,9 @@ class HalClient
   # options
   #   :override_headers -
   def client_for_get(options={})
-    override_headers = options[:override_headers]
+    headers = default_message_request_headers.merge(options[:override_headers])
 
-    if !override_headers
-      @client_for_get ||= base_client.with_headers(default_message_request_headers)
-    else
-      client_for_get.with_headers(override_headers)
-    end
+    base_client_with_headers(headers)
   end
 
   # Returns the HTTP client to be used to make post requests.
@@ -227,19 +224,24 @@ class HalClient
   # options
   #   :override_headers -
   def client_for_post(options={})
-    override_headers = options[:override_headers]
+    headers = default_entity_and_message_request_headers.merge(options[:override_headers])
 
-    if !override_headers
-      @client_for_post ||=
-        base_client.with_headers(default_entity_and_message_request_headers)
-    else
-      client_for_post.with_headers(override_headers)
-    end
+    base_client_with_headers(headers)
   end
 
   # Returns an HTTP client.
   def base_client
-    @base_client ||= HTTP::Client.new(follow: true)
+    @base_client ||= begin
+      logger.debug 'Created base_client'
+      HTTP::Client.new(follow: true)
+    end
+  end
+
+  def base_client_with_headers(headers)
+    @base_client_with_headers[headers.to_h] ||= begin
+      logger.debug { "Created base_client with headers #{headers.inspect}" }
+      base_client.with_headers(headers)
+    end
   end
 
   attr_reader :default_entity_request_headers, :default_message_request_headers
