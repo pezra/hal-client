@@ -27,4 +27,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.5"
   spec.add_development_dependency "webmock", ["~> 1.17", ">= 1.17.4"]
   spec.add_development_dependency "rspec-collection_matchers"
+  spec.add_development_dependency "pry"
 end
