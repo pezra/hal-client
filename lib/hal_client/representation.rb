@@ -159,11 +159,7 @@ class HalClient
     #
     # link_rel - The link rel of interest
     def related?(link_rel)
-      _ = related link_rel
-      true
-
-    rescue KeyError
-      false
+      !!(linked(link_rel) { false } || embedded(link_rel) { false })
     end
     alias_method :has_related?, :related?
 
@@ -367,7 +363,7 @@ class HalClient
       fail InvalidRepresentationError, "/_embedded/#{jpointer_esc(link_rel)} is not a valid representation"
     end
 
-    def linked(link_rel, options, &default_proc)
+    def linked(link_rel, options = {}, &default_proc)
       default_proc ||= NO_LINK_FOUND
 
       relations = links.hrefs(link_rel) { MISSING }
