@@ -1,4 +1,5 @@
 require "hal_client"
+require 'http'
 
 RSpec.describe HalClient do
   describe ".new()" do
@@ -86,6 +87,43 @@ RSpec.describe HalClient do
       end
     end
 
+    context "client reuse" do
+      let(:return_val) { nil }
+      let(:base_client) { instance_double('HTTP::Client') }
+      let(:real_client) { HTTP::Client.new }
+      subject(:client) { HalClient.new(base_client: base_client) }
+
+      it 'creates a base client with headers' do
+        expect(base_client).to receive(:with_headers) do |headers|
+          expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0')
+
+          real_client
+        end
+
+        client.get "http://example.com/foo"
+      end
+
+      it 'reuses base client with headers instances' do
+        expect(base_client).to receive(:with_headers) do |headers|
+          expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0', 'Foo' => 'Bar')
+
+          real_client
+        end.once
+
+        client.get("http://example.com/foo", 'Foo' => 'Bar')
+
+        expect(base_client).to receive(:with_headers) do |headers|
+          expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0', 'Hello' => 'World')
+
+          real_client
+        end.once
+
+        client.get("http://example.com/foo", 'Hello' => 'World')
+
+        client.get("http://example.com/foo", 'Foo' => 'Bar')
+        client.get("http://example.com/foo", 'Hello' => 'World')
+      end
+    end
   end
 
   context "server takes too long" do
@@ -277,6 +315,43 @@ RSpec.describe HalClient do
       it "logs the request" do
         expect(logger.info_entries).to have(1).item
         expect(logger.info_entries.first).to include "http://example.com/foo"
+      end
+    end
+
+    context "client reuse" do
+      let(:base_client) { instance_double('HTTP::Client') }
+      let(:real_client) { HTTP::Client.new }
+      subject(:client) { HalClient.new(base_client: base_client) }
+
+      it 'creates a base client with headers' do
+        expect(base_client).to receive(:with_headers) do |headers|
+          expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0')
+
+          real_client
+        end
+
+        client.post(url, post_data)
+      end
+
+      it 'reuses base client with headers instances' do
+        expect(base_client).to receive(:with_headers) do |headers|
+          expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0', 'Foo' => 'Bar')
+
+          real_client
+        end.once
+
+        client.post(url, post_data, 'Foo' => 'Bar')
+
+        expect(base_client).to receive(:with_headers) do |headers|
+          expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0', 'Hello' => 'World')
+
+          real_client
+        end.once
+
+        client.post(url, post_data, 'Hello' => 'World')
+
+        client.post(url, post_data, 'Foo' => 'Bar')
+        client.post(url, post_data, 'Hello' => 'World')
       end
     end
   end
