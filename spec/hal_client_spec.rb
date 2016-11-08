@@ -94,7 +94,7 @@ RSpec.describe HalClient do
       subject(:client) { HalClient.new(base_client: base_client) }
 
       it 'creates a base client with headers' do
-        expect(base_client).to receive(:with_headers) do |headers|
+        expect(base_client).to receive(:headers) do |headers|
           expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0')
 
           real_client
@@ -104,7 +104,7 @@ RSpec.describe HalClient do
       end
 
       it 'reuses base client with headers instances' do
-        expect(base_client).to receive(:with_headers) do |headers|
+        expect(base_client).to receive(:headers) do |headers|
           expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0', 'Foo' => 'Bar')
 
           real_client
@@ -112,7 +112,7 @@ RSpec.describe HalClient do
 
         client.get("http://example.com/foo", 'Foo' => 'Bar')
 
-        expect(base_client).to receive(:with_headers) do |headers|
+        expect(base_client).to receive(:headers) do |headers|
           expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0', 'Hello' => 'World')
 
           real_client
@@ -324,7 +324,7 @@ RSpec.describe HalClient do
       subject(:client) { HalClient.new(base_client: base_client) }
 
       it 'creates a base client with headers' do
-        expect(base_client).to receive(:with_headers) do |headers|
+        expect(base_client).to receive(:headers) do |headers|
           expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0')
 
           real_client
@@ -334,7 +334,7 @@ RSpec.describe HalClient do
       end
 
       it 'reuses base client with headers instances' do
-        expect(base_client).to receive(:with_headers) do |headers|
+        expect(base_client).to receive(:headers) do |headers|
           expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0', 'Foo' => 'Bar')
 
           real_client
@@ -342,7 +342,7 @@ RSpec.describe HalClient do
 
         client.post(url, post_data, 'Foo' => 'Bar')
 
-        expect(base_client).to receive(:with_headers) do |headers|
+        expect(base_client).to receive(:headers) do |headers|
           expect(headers.to_h).to include('Accept' => 'application/hal+json;q=0', 'Hello' => 'World')
 
           real_client
