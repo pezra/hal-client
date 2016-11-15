@@ -367,7 +367,7 @@ class HalClient
       default_proc ||= NO_LINK_FOUND
 
       relations = links.hrefs(link_rel) { MISSING }
-      return default_proc.call(link_rel, options) if relations == MISSING
+      return default_proc.call(link_rel, options) if relations == MISSING || relations.compact.empty?
 
       relations
         .map {|url_or_tmpl|

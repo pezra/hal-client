@@ -56,6 +56,7 @@ class HalClient
 
       rel = hash_entry[:rel]
       hash_data = hash_entry[:data]
+      return nil unless hash_data['href']
       href = (base_url + hash_data['href']).to_s
 
       if hash_data['templated']

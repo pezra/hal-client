@@ -49,6 +49,18 @@ RSpec.describe HalClient::Link do
                                                     base_url: base_url)
       expect(my_link.raw_href).to eq((base_url + relative_href_1).to_s)
     end
+
+    it "handles hrefs with a nil value" do
+      input_hash = link_entry_hash(href: nil)
+      base_url = Addressable::URI.parse(href_1)
+
+      my_link = described_class.new_from_link_entry(hash_entry: input_hash,
+                                                    hal_client: a_client,
+                                                    curie_resolver: curie_resolver,
+                                                    base_url: base_url)
+
+      expect(my_link.raw_href).to eq(base_url.to_s)
+    end
   end
 
   describe ".new_from_embedded_entry" do

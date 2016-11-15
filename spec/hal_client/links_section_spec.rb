@@ -30,6 +30,9 @@ RSpec.describe HalClient::LinksSection, "namespaces embedded" do
 
   specify { expect{section.hrefs("nonexistent")}.to raise_error KeyError }
 
+  specify { expect(section.hrefs("nil_href"))
+    .to contain_exactly nil }
+
   let(:fully_qualified_first_rel) { "http://rels.example.com/first" }
   let(:fully_qualified_second_rel) { "http://rels.example.com/2/second" }
 
@@ -45,6 +48,7 @@ RSpec.describe HalClient::LinksSection, "namespaces embedded" do
       "ns1:first" => {"href" => "http://example.com/foo"},
       "ns2:second" => [{"href" => "http://example.com/bar"},
                        {"href" => "http://example.com/baz"}],
+      "nil_href" => {"href" => nil},
       "next" => {"href" =>  "/foo?p=2"}
     } }
 

@@ -50,6 +50,7 @@ class HalClient
     def resolve_to_url(link)
       (fail HalClient::InvalidRepresentationError) unless link.respond_to? :fetch
 
+      return nil unless link.fetch("href")
       url = base_url + link.fetch("href")
       is_templated = link.fetch("templated", false)
 
