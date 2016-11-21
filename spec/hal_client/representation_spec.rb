@@ -429,24 +429,24 @@ HAL
 
 
   let(:link1_link) do
-    HalClient::Link.new(rel: 'link1', target: link1_repr)
+    HalClient::SimpleLink.new(rel: 'link1', target: link1_repr)
   end
 
   let(:link2_link) do
-    HalClient::Link.new(rel: 'link2', target: link1_repr)
+    HalClient::SimpleLink.new(rel: 'link2', target: link1_repr)
   end
 
   let(:templated_link) do
-    HalClient::Link.new(rel: 'templated',
-                        template: Addressable::Template.new('http://example.com/people{?name}'))
+    HalClient::TemplatedLink.new(rel: 'templated',
+                                 template: Addressable::Template.new('http://example.com/people{?name}'))
   end
 
   let(:link3a_link) do
-    HalClient::Link.new(rel: 'link3', target: link3a_repr)
+    HalClient::SimpleLink.new(rel: 'link3', target: link3a_repr)
   end
 
   let(:link3b_link) do
-    HalClient::Link.new(rel: 'link3', target: link3b_repr)
+    HalClient::SimpleLink.new(rel: 'link3', target: link3b_repr)
   end
 
 

@@ -4,41 +4,62 @@ class HalClient
 
   # HAL representation of a single link. Provides access to an embedded representation.
   class Link
+    protected def initialize(rel:, curie_resolver: CurieResolver.new([]), **opts)
+      @literal_rel = rel
+      @curie_resolver = curie_resolver
 
-    # Create a new Link
-    #
-    # options - name parameters
-    #   :rel - This Link's rel property
-    #   :target - An instance of Representation
-    #   :template - A URI template ( https://www.rfc-editor.org/rfc/rfc6570.txt )
-    #   :curie_resolver - An instance of CurieResolver (used to resolve curied rels)
-    def initialize(options)
-      @literal_rel = options[:rel]
-      @target = options[:target]
-      @template = options[:template]
-      @curie_resolver = options[:curie_resolver] || CurieResolver.new([])
-
-      (fail ArgumentError, "A rel must be provided") if @literal_rel.nil?
-
-      if @target.nil? && @template.nil?
-        (fail ArgumentError, "A target or template must be provided")
-      end
-
-      if @target && @template
-        (fail ArgumentError, "Cannot provide both a target and a template")
-      end
-
-      if @target && !@target.kind_of?(Representation)
-        (fail ArgumentError, "Invalid HAL representation: #{target.inspect}")
-      end
-
-      if @template && !@template.kind_of?(Addressable::Template)
-        (fail ArgumentError, "Invalid Addressable::Template: #{template.inspect}")
-      end
+      post_initialize(opts)
     end
 
-    attr_accessor :literal_rel, :target, :template, :curie_resolver
+    def raw_href
+      raise NotImplementedError
+    end
 
+    def target_url(vars = {})
+      raise NotImplementedError
+    end
+
+    def target(vars = {})
+      raise NotImplementedError
+    end
+
+    def templated?
+      raise NotImplementedError
+    end
+
+    attr_reader :literal_rel, :curie_resolver
+
+    def fully_qualified_rel
+      curie_resolver.resolve(literal_rel)
+    end
+
+    alias_method :target, :target_url
+
+    # Links with the same href, same rel value, and the same 'templated' value
+    # are considered equal Otherwise, they are considered unequal
+    def ==(other)
+      if other.respond_to?(:raw_href) &&
+         other.respond_to?(:fully_qualified_rel) &&
+         other.respond_to?(:templated?)
+        (raw_href == other.raw_href) &&
+          (fully_qualified_rel == other.fully_qualified_rel) &&
+          (templated? == other.templated?)
+      else
+        false
+      end
+    end
+    alias :eql? :==
+
+    # Differing Representations or Addressable::Templates with matching hrefs will get matching hash
+    # values, since we are using raw_href and not the objects themselves when computing hash
+    def hash
+      [fully_qualified_rel, raw_href, templated?].hash
+    end
+
+    protected
+
+    def post_initialize(opts)
+    end
 
     # Create a new Link using an entry from the '_links' section of a HAL document
     #
@@ -60,13 +81,13 @@ class HalClient
       href = (base_url + hash_data['href']).to_s
 
       if hash_data['templated']
-        Link.new(rel: rel,
-                 template: Addressable::Template.new(href),
-                 curie_resolver: curie_resolver)
+        TemplatedLink.new(rel: rel,
+                          template: Addressable::Template.new(href),
+                          curie_resolver: curie_resolver)
       else
-        Link.new(rel: rel,
-                 target: Representation.new(hal_client: hal_client, href: href),
-                 curie_resolver: curie_resolver)
+        SimpleLink.new(rel: rel,
+                       target: Representation.new(hal_client: hal_client, href: href),
+                       curie_resolver: curie_resolver)
       end
     end
 
@@ -91,51 +112,10 @@ class HalClient
       explicit_url = self_href(hash_data)
       hash_data['_links']['self']['href'] = (base_url + explicit_url).to_s if explicit_url
 
-      Link.new(rel: rel,
-               target: Representation.new(hal_client: hal_client, parsed_json: hash_data),
-               curie_resolver: curie_resolver)
+      SimpleLink.new(rel: rel,
+                     target: Representation.new(hal_client: hal_client, parsed_json: hash_data),
+                     curie_resolver: curie_resolver)
     end
-
-
-    # Returns the URL of the resource this link references.
-    # In the case of a templated link, this is the unresolved url template pattern.
-    def raw_href
-      templated? ? template.pattern : target.href
-    end
-
-    def fully_qualified_rel
-      curie_resolver.resolve(literal_rel)
-    end
-
-    # Returns true for a templated link, false for an ordinary (non-templated) link
-    def templated?
-      !template.nil?
-    end
-
-    # Links with the same href, same rel value, and the same 'templated' value are considered equal
-    # Otherwise, they are considered unequal
-    def ==(other)
-      if other.respond_to?(:raw_href) &&
-         other.respond_to?(:fully_qualified_rel) &&
-         other.respond_to?(:templated?)
-        (raw_href == other.raw_href) &&
-          (fully_qualified_rel == other.fully_qualified_rel) &&
-          (templated? == other.templated?)
-      else
-        false
-      end
-    end
-    alias :eql? :==
-
-
-    # Differing Representations or Addressable::Templates with matching hrefs will get matching hash
-    # values, since we are using raw_href and not the objects themselves when computing hash
-    def hash
-      [fully_qualified_rel, raw_href, templated?].hash
-    end
-
-
-    protected
 
     def self.self_href(embedded_repr)
       embedded_repr
@@ -143,5 +123,76 @@ class HalClient
         .fetch('self', {})
         .fetch('href', nil)
     end
+
   end
+
+  class SimpleLink < Link
+
+    protected def post_initialize(target:)
+      fail(ArgumentError) unless target.kind_of?(HalClient::Representation)
+
+      @target = target
+    end
+
+    attr_accessor :target
+
+    def raw_href
+      target.href.to_s
+    end
+
+    def templated?
+      false
+    end
+
+    def target_url(_vars = {})
+      target.href
+    end
+  end
+
+
+  class TemplatedLink < Link
+    protected def post_initialize(template:)
+      fail(ArgumentError) unless template.kind_of? Addressable::Template
+      @tmpl = template
+    end
+
+    def raw_href
+      tmpl.pattern
+    end
+
+    def templated?
+      true
+    end
+
+    def target_url(vars = {})
+      tmpl.expand(vars)
+    end
+
+    protected
+
+    attr_reader :tmpl
+  end
+
+  # class EmbeddedLink < Link
+  #   protected def post_initialize(target:)
+  #     @target_repr = target
+  #   end
+
+  #   def raw_href
+  #     target_repr.href.to_s
+  #   end
+
+  #   alias_method :target_url, :raw_href
+
+  #   def templated?
+  #     false
+  #   end
+
+  #   protected
+
+  #   attr_reader :target_repr
+  # end
+
+
+
 end

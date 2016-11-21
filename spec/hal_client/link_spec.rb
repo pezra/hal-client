@@ -4,28 +4,28 @@ require "hal_client/link"
 
 RSpec.describe HalClient::Link do
 
-  subject(:link) { described_class.new(rel: rel_1, target: repr_1) }
+  subject(:link) { HalClient::SimpleLink.new(rel: rel_1, target: repr_1) }
 
   describe "#initialize" do
     it "requires a target" do
-      expect { HalClient::Link.new(rel: rel_1) }.to raise_error(ArgumentError)
+      expect { HalClient::SimpleLink.new(rel: rel_1) }.to raise_error(ArgumentError)
     end
 
     it "doesn't allow both target and template" do
       expect {
-        HalClient::Link.new(rel: rel_1, target: repr_1, template: template_1)
+        HalClient::SimpleLink.new(rel: rel_1, target: repr_1, template: template_1)
       }.to raise_error(ArgumentError)
     end
 
     it "requires target to be a Representation" do
       expect {
-        HalClient::Link.new(rel: rel_1, target: template_1)
+        HalClient::SimpleLink.new(rel: rel_1, target: template_1)
       }.to raise_error(ArgumentError)
     end
 
     it "requires template to be an Addressable::Template" do
       expect {
-        HalClient::Link.new(rel: rel_1, template: repr_1)
+        HalClient::TemplatedLink.new(rel: rel_1, template: repr_1)
       }.to raise_error(ArgumentError)
     end
   end
@@ -95,27 +95,30 @@ RSpec.describe HalClient::Link do
   end
 
   context "equality and hash" do
-    let(:link_same_target_same_rel) { HalClient::Link.new(target: repr_1, rel: rel_1) }
+    let(:link_same_target_same_rel) { HalClient::SimpleLink.new(target: repr_1, rel: rel_1) }
 
-    let(:link_same_target_diff_rel) { HalClient::Link.new(target: repr_1, rel: rel_2) }
-    let(:link_diff_target_same_rel) { HalClient::Link.new(target: repr_2, rel: rel_1) }
-    let(:link_diff_target_diff_rel) { HalClient::Link.new(target: repr_2, rel: rel_2) }
+    let(:link_same_target_diff_rel) { HalClient::SimpleLink.new(target: repr_1, rel: rel_2) }
+    let(:link_diff_target_same_rel) { HalClient::SimpleLink.new(target: repr_2, rel: rel_1) }
+    let(:link_diff_target_diff_rel) { HalClient::SimpleLink.new(target: repr_2, rel: rel_2) }
 
-    let(:link_same_non_fetched) { HalClient::Link.new(target: href_only_repr, rel: rel_1) }
+    let(:link_same_non_fetched) { HalClient::SimpleLink.new(target: href_only_repr, rel: rel_1) }
 
     let(:same_as_templated_link1) do
-      HalClient::Link.new(rel: 'templated_link',
-                          template: Addressable::Template.new('http://example.com/people{?name}'))
+      HalClient::TemplatedLink
+        .new(rel: 'templated_link',
+             template: Addressable::Template.new('http://example.com/people{?name}'))
     end
 
     let(:templated_link2) do
-      HalClient::Link.new(rel: 'templated_link',
-                          template: Addressable::Template.new('http://example.com/places{?name}'))
+      HalClient::TemplatedLink
+        .new(rel: 'templated_link',
+             template: Addressable::Template.new('http://example.com/places{?name}'))
     end
 
     let(:template_but_not_a_template) do
-      HalClient::Link.new(rel: 'rel_1',
-                          template: Addressable::Template.new('http://example.com/href_1'))
+      HalClient::TemplatedLink
+        .new(rel: 'rel_1',
+             template: Addressable::Template.new('http://example.com/href_1'))
     end
 
     describe "#==" do
@@ -181,7 +184,7 @@ RSpec.describe HalClient::Link do
   let(:rel_2) { 'rel_2' }
 
   let(:full_uri_rel_1) { 'http://example.com/rels/rel_1' }
-  let(:full_uri_link_1) { HalClient::Link.new(rel: full_uri_rel_1, target: repr_1) }
+  let(:full_uri_link_1) { HalClient::SimpleLink.new(rel: full_uri_rel_1, target: repr_1) }
 
   let(:curie_resolver) do
     HalClient::CurieResolver.new({
@@ -194,7 +197,7 @@ RSpec.describe HalClient::Link do
   let(:curied_rel_1) { 'ex:rel_1' }
 
   let(:curied_link_1) do
-    HalClient::Link.new(rel: curied_rel_1, target: repr_1, curie_resolver: curie_resolver)
+    HalClient::SimpleLink.new(rel: curied_rel_1, target: repr_1, curie_resolver: curie_resolver)
   end
 
   let(:href_1) { 'http://example.com/href_1' }
@@ -281,6 +284,6 @@ RSpec.describe HalClient::Link do
 
   let(:template_1) { Addressable::Template.new('http://example.com/people{?name}') }
 
-  let(:templated_link1) { HalClient::Link.new(rel: 'templated_link', template: template_1) }
+  let(:templated_link1) { HalClient::TemplatedLink.new(rel: 'templated_link', template: template_1) }
 
 end
