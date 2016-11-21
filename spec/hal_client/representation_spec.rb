@@ -11,6 +11,7 @@ RSpec.describe HalClient::Representation do
                 ,"templated": true }
     ,"link3": [{ "href": "http://example.com/link3-a" }
                ,{ "href": "http://example.com/link3-b" }]
+    ,"nil_link": { "href": null }
     ,"dup": { "href": "http://example.com/dup" }
   }
   ,"_embedded": {
@@ -301,6 +302,7 @@ HAL
 
   specify { expect(subject.has_related? "no-such-link-or-embed").to be false }
   specify { expect(subject.related? "no-such-link-or-embed").to be false }
+  specify { expect(subject.related? "nil_link").to be false }
 
   specify { expect(subject.to_json).to be_equivalent_json_to raw_repr }
   specify { expect(subject.to_hal).to be_equivalent_json_to raw_repr }
