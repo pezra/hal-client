@@ -14,3 +14,9 @@ rvm:
   - 2.3.2
   - jruby-9.1.6.0
   - rbx-2.7
+
+gemfile:
+  - Gemfile
+  - Gemfile-http-0.8
+  - Gemfile-http-0.9
+  - Gemfile-http-1.0
