@@ -240,7 +240,7 @@ class HalClient
   def base_client_with_headers(headers)
     @base_client_with_headers[headers.to_h] ||= begin
       logger.debug { "Created base_client with headers #{headers.inspect}" }
-      base_client.with_headers(headers)
+      base_client.headers(headers)
     end
   end
 
