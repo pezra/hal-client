@@ -3,6 +3,7 @@ require 'addressable/template'
 
 require 'hal_client'
 require 'hal_client/representation_set'
+require 'hal_client/interpreter'
 
 class HalClient
 
@@ -10,10 +11,6 @@ class HalClient
   # properties, links and embedded representations.
   class Representation
     extend Forwardable
-
-    # Collection of reserved properties
-    # https://tools.ietf.org/html/draft-kelly-json-hal-07#section-4.1
-    RESERVED_PROPERTIES = ['_links', '_embedded'].freeze
 
     NO_RELATED_RESOURCE = ->(link_rel) {
       raise KeyError, "No resources are related via `#{link_rel}`"
@@ -37,7 +34,7 @@ class HalClient
     #   :href - The href of this representation.
     #   :hal_client - The HalClient instance to use when navigating.
     def initialize(options)
-      @raw = options[:parsed_json]
+      self.raw = options[:parsed_json]
       @hal_client = options[:hal_client]
       @href = options[:href]
 
@@ -86,7 +83,8 @@ class HalClient
     #
     # name - the name of the property to check
     def property?(name)
-      raw.key? name
+      ensure_reified
+      properties.key? name
     end
     alias_method :has_property?, :property?
 
@@ -103,17 +101,17 @@ class HalClient
     # Raises KeyError if the specified property does not exist
     #   and no default nor default_proc is provided.
     def property(name, default=MISSING, &default_proc)
+      ensure_reified
+
       default_proc ||= ->(_){ default} if default != MISSING
 
-      raw.fetch(name.to_s, &default_proc)
+      properties.fetch(name.to_s, &default_proc)
     end
 
     # Returns a Hash including the key-value pairs of all the properties
     #   in the resource. It does not include HAL's reserved
     #   properties (`_links` and `_embedded`).
-    def properties
-      raw.reject { |k, _| RESERVED_PROPERTIES.include? k }
-    end
+    attr_reader :properties
 
     # Returns the URL of the resource this representation represents.
     def href
@@ -306,21 +304,20 @@ class HalClient
 
     # Internal: Returns parsed json document
     def raw
-      if @raw.nil? && @href
-        (fail "unable to make requests due to missing hal client") unless hal_client
-
-        response = hal_client.get(@href)
-
-        unless response.is_a?(Representation)
-          error_message = "Response body wasn't a valid HAL document:\n\n"
-          error_message += response.body
-          raise InvalidRepresentationError.new(error_message)
-        end
-
-        @raw ||= response.raw
-      end
+      ensure_reified
 
       @raw
+    end
+
+    def raw=(parsed_json)
+      @raw = parsed_json
+      @properties = if parsed_json
+                      interpreter = HalClient::Interpreter.new(parsed_json)
+
+                      interpreter.extract_props
+                    else
+                      {}
+                    end
     end
 
     # Internal: Returns the HalClient used to retrieve this
@@ -330,6 +327,22 @@ class HalClient
     protected
 
     MISSING = Object.new
+
+    def ensure_reified
+      return if @raw
+      (fail "unable to make requests due to missing hal client") unless hal_client
+      (fail "unable to make requests due to missing href") unless @href
+
+      response = hal_client.get(@href)
+
+      unless response.is_a?(Representation)
+        error_message = "Response body wasn't a valid HAL document:\n\n"
+        error_message += response.body
+        raise InvalidRepresentationError.new(error_message)
+      end
+
+      self.raw = response.raw
+    end
 
     def flatten_section(section_hash)
       section_hash
