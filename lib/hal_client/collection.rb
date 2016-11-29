@@ -20,7 +20,6 @@ class HalClient
     # Raises ArgumentError if `first_page` is some page other than 
     #   the first of the collection.
     def initialize(first_page)
-      (fail NotACollectionError) unless first_page.has_related? "item"
       (fail ArgumentError, "Not the first page of the collection") if first_page.has_related? "prev"
 
       @first_page = first_page

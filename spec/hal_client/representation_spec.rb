@@ -107,13 +107,15 @@ HAL
   describe "#to_s" do
     subject(:return_val) { repr.to_s }
 
-    it { is_expected.to eq "#<HalClient::Representation: http://example.com/foo>" }
+    it { is_expected.to match %{#<HalClient::Representation:} }
+    it { is_expected.to match %r{http://example.com/foo} }
 
     context "anonymous" do
       let(:repr) {  described_class.new(hal_client: a_client,
                                         parsed_json: MultiJson.load("{}")) }
 
-      it { is_expected.to eq "#<HalClient::Representation: ANONYMOUS>" }
+      it { is_expected.to match %{#<HalClient::Representation:} }
+      it { is_expected.to match /ANONYMOUS/i }
     end
   end
 
@@ -152,7 +154,7 @@ HAL
 
     describe "hash" do
       specify{ expect(repr.hash).to eq repr.href.hash }
-      specify{ expect(repr_no_href.hash).to eq repr_no_href.raw.hash }
+      specify{ expect(repr_no_href.hash).not_to eq repr_no_href.raw.hash }
     end
   end
 
@@ -279,7 +281,10 @@ HAL
     specify { expect(subject).to include(link3a_link) }
     specify { expect(subject).to include(link3b_link) }
 
-    specify { expect(subject.any? { |item| item.target['dupProperty'] == 'foo' }).to be true }
+    specify { expect(subject
+                      .find { |l| l.literal_rel == "dup" }
+                      .target['dupProperty'])
+              .to eq "foo" }
   end
 
   specify { expect(repr.related_hrefs "link1")
@@ -408,11 +413,6 @@ HAL
     specify { expect( repr.to_enum ).to have(2).items }
   end
 
-  context "non-collection" do
-    specify { expect{repr.as_enum}.to raise_error(HalClient::NotACollectionError) }
-    specify { expect{repr.to_enum}.to raise_error(HalClient::NotACollectionError) }
-  end
-
   # Background
 
   let(:link1_repr) do
@@ -438,7 +438,8 @@ HAL
 
   let(:templated_link) do
     HalClient::TemplatedLink.new(rel: 'templated',
-                                 template: Addressable::Template.new('http://example.com/people{?name}'))
+                                 template: Addressable::Template.new('http://example.com/people{?name}'),
+                                 hal_client: a_client)
   end
 
   let(:link3a_link) do
