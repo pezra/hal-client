@@ -8,10 +8,9 @@ before_install:
   - gem install bundler
 
 rvm:
-  - 2.0
   - 2.1
-  - 2.2.6
-  - 2.3.2
+  - 2.2
+  - 2.3
   - jruby-9.1.6.0
   - rbx-2.7
 
@@ -20,3 +19,7 @@ gemfile:
   - Gemfile-http-0.8
   - Gemfile-http-0.9
   - Gemfile-http-1.0
+
+matrix:
+  allow_failures:
+  - rvm: rbx-2.7
