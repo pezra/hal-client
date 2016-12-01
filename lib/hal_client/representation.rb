@@ -3,17 +3,14 @@ require 'addressable/template'
 
 require 'hal_client'
 require 'hal_client/representation_set'
+require 'hal_client/interpreter'
+require 'hal_client/anonymous_resource_locator'
 
 class HalClient
-
   # HAL representation of a single resource. Provides access to
   # properties, links and embedded representations.
   class Representation
     extend Forwardable
-
-    # Collection of reserved properties
-    # https://tools.ietf.org/html/draft-kelly-json-hal-07#section-4.1
-    RESERVED_PROPERTIES = ['_links', '_embedded'].freeze
 
     NO_RELATED_RESOURCE = ->(link_rel) {
       raise KeyError, "No resources are related via `#{link_rel}`"
@@ -37,15 +34,13 @@ class HalClient
     #   :href - The href of this representation.
     #   :hal_client - The HalClient instance to use when navigating.
     def initialize(options)
-      @raw = options[:parsed_json]
       @hal_client = options[:hal_client]
       @href = options[:href]
 
+      interpret options[:parsed_json] if options[:parsed_json]
+
       (fail ArgumentError, "Either parsed_json or href must be provided") if
         @raw.nil? && @href.nil?
-
-      (fail InvalidRepresentationError, "Invalid HAL representation: #{raw.inspect}") if
-        @raw && ! hashish?(@raw)
     end
 
     # Posts a `Representation` or `String` to this resource. Causes
@@ -86,7 +81,8 @@ class HalClient
     #
     # name - the name of the property to check
     def property?(name)
-      raw.key? name
+      ensure_reified
+      properties.key? name
     end
     alias_method :has_property?, :property?
 
@@ -103,24 +99,24 @@ class HalClient
     # Raises KeyError if the specified property does not exist
     #   and no default nor default_proc is provided.
     def property(name, default=MISSING, &default_proc)
+      ensure_reified
+
       default_proc ||= ->(_){ default} if default != MISSING
 
-      raw.fetch(name.to_s, &default_proc)
+      properties.fetch(name.to_s, &default_proc)
     end
 
     # Returns a Hash including the key-value pairs of all the properties
     #   in the resource. It does not include HAL's reserved
     #   properties (`_links` and `_embedded`).
-    def properties
-      raw.reject { |k, _| RESERVED_PROPERTIES.include? k }
-    end
+    attr_reader :properties
 
     # Returns the URL of the resource this representation represents.
     def href
       @href ||= raw
               .fetch("_links",{})
               .fetch("self",{})
-              .fetch("href",nil)
+              .fetch("href", AnonymousResourceLocator.new)
     end
 
     # Returns the value of the specified property or representations
@@ -159,7 +155,7 @@ class HalClient
     #
     # link_rel - The link rel of interest
     def related?(link_rel)
-      !!(linked(link_rel) { false } || embedded(link_rel) { false })
+      links_by_rel.key?(link_rel)
     end
     alias_method :has_related?, :related?
 
@@ -178,33 +174,13 @@ class HalClient
     def related(link_rel, options = {}, &default_proc)
       default_proc ||= NO_RELATED_RESOURCE
 
-      embedded = embedded(link_rel) { nil }
-      linked = linked(link_rel, options) { nil }
-      return default_proc.call(link_rel) if embedded.nil? and linked.nil?
+      ensure_reified
 
-      RepresentationSet.new (Array(embedded) + Array(linked))
-    end
+      related = links_by_rel
+                .fetch(link_rel) { return default_proc.call(link_rel) }
+                .map { |l| l.target(options) }
 
-    def all_links
-      result = Set.new
-      base_url = Addressable::URI.parse(href || "")
-
-      embedded_entries = flatten_section(raw.fetch("_embedded", {}))
-      result.merge(embedded_entries.map do |entry|
-        Link.new_from_embedded_entry(hash_entry: entry,
-                                     hal_client: hal_client,
-                                     curie_resolver: namespaces,
-                                     base_url: base_url)
-      end)
-
-      link_entries = flatten_section(raw.fetch("_links", {}))
-      result.merge(link_entries.map { |entry|
-        Link.new_from_link_entry(hash_entry: entry,
-                                 hal_client: hal_client,
-                                 curie_resolver: namespaces,
-                                 base_url: base_url) })
-
-      result
+      RepresentationSet.new(related)
     end
 
     # Returns urls of resources related via the specified
@@ -241,11 +217,11 @@ class HalClient
     def raw_related_hrefs(link_rel, &default_proc)
       default_proc ||= NO_RELATED_RESOURCE
 
-      embedded = embedded(link_rel) { nil }
-      linked = links.hrefs(link_rel) { nil }
-      return default_proc.call(link_rel) if embedded.nil? and linked.nil?
+      ensure_reified
 
-      Array(linked) + Array(embedded).map(&:href)
+      links_by_rel
+        .fetch(link_rel) { return default_proc.call(link_rel) }
+        .map { |l| l.raw_href }
     end
 
     # Returns an Enumerable of the items in this collection resource
@@ -266,6 +242,16 @@ class HalClient
       as_enum.to_enum(method, *args, &blk)
     end
 
+    # Returns set of all links in this representation.
+    def all_links
+      links_by_rel
+        .reduce(Set.new) { |result, kv|
+          _,links = *kv
+          links.each { |l| result << l }
+          result
+        }
+    end
+
     # Resets this representation such that it will be requested from
     # the upstream on it's next use.
     def reset
@@ -276,7 +262,7 @@ class HalClient
     # Returns a short human readable description of this
     # representation.
     def to_s
-      "#<" + self.class.name + ": " + (href || "ANONYMOUS")  + ">"
+      "#<" + self.class.name + ": " + href.to_s  + ">"
     end
 
     # Returns the raw json representation of this representation
@@ -304,109 +290,55 @@ class HalClient
     end
     alias :eql? :==
 
-    # Internal: Returns parsed json document
+    # Returns raw parsed json.
     def raw
-      if @raw.nil? && @href
-        (fail "unable to make requests due to missing hal client") unless hal_client
-
-        response = hal_client.get(@href)
-
-        unless response.is_a?(Representation)
-          error_message = "Response body wasn't a valid HAL document:\n\n"
-          error_message += response.body
-          raise InvalidRepresentationError.new(error_message)
-        end
-
-        @raw ||= response.raw
-      end
+      ensure_reified
 
       @raw
     end
 
-    # Internal: Returns the HalClient used to retrieve this
-    # representation
+    # Returns the HalClient used to retrieve this representation
     attr_reader :hal_client
 
     protected
 
+    attr_reader :links_by_rel
+
     MISSING = Object.new
 
-    def flatten_section(section_hash)
-      section_hash
-        .each_pair
-        .flat_map { |rel, some_link_info|
-          [some_link_info].flatten
-          .map { |a_link_info| { rel: rel, data: a_link_info } }
-      }
-    end
+    # Fetch the representation from origin server if that has not already
+    # happened.
+    def ensure_reified
+      return if @raw
+      (fail "unable to make requests due to missing hal client") unless hal_client
+      (fail "unable to make requests due to missing href") unless @href
 
-    def links
-      @links ||= LinksSection.new((raw.fetch("_links"){{}}),
-                                  base_url: Addressable::URI.parse(href || ""))
-    end
+      response = hal_client.get(@href)
 
-    def embedded_section
-      embedded = raw.fetch("_embedded", {})
-
-      @embedded_section ||= embedded.merge fully_qualified(embedded)
-    end
-
-    def embedded(link_rel, &default_proc)
-      default_proc ||= NO_EMBED_FOUND
-
-      relations = embedded_section.fetch(link_rel) { MISSING }
-      return default_proc.call(link_rel) if relations == MISSING
-
-      (boxed relations).map{|it| Representation.new hal_client: hal_client, parsed_json: it}
-
-    rescue InvalidRepresentationError
-      fail InvalidRepresentationError, "/_embedded/#{jpointer_esc(link_rel)} is not a valid representation"
-    end
-
-    def linked(link_rel, options = {}, &default_proc)
-      default_proc ||= NO_LINK_FOUND
-
-      relations = links.hrefs(link_rel) { MISSING }
-      return default_proc.call(link_rel, options) if relations == MISSING || relations.compact.empty?
-
-      relations
-        .map {|url_or_tmpl|
-          if url_or_tmpl.respond_to? :expand
-            url_or_tmpl.expand(options).to_s
-          else
-            url_or_tmpl
-          end }
-        .map {|href| Representation.new href: href, hal_client: hal_client }
-
-    rescue InvalidRepresentationError
-      fail InvalidRepresentationError, "/_links/#{jpointer_esc(link_rel)} is not a valid link"
-    end
-
-    def jpointer_esc(str)
-      str.gsub "/", "~1"
-    end
-
-    def boxed(list_hash_or_nil)
-      if hashish? list_hash_or_nil
-        [list_hash_or_nil]
-      elsif list_hash_or_nil.respond_to? :map
-        list_hash_or_nil
-      else
-        # The only valid values for a link/embedded set are hashes or
-        # array-ish things.
-
-        fail InvalidRepresentationError
+      unless response.is_a?(Representation)
+        error_message = "Response body wasn't a valid HAL document:\n\n"
+        error_message += response.body
+        raise InvalidRepresentationError.new(error_message)
       end
+
+      interpret response.raw
     end
 
-    def fully_qualified(relations_section)
-      Hash[relations_section.map {|rel, link_info|
-        [(namespaces.resolve rel), link_info]
-      }]
-    end
+    def interpret(parsed_json)
+      @raw = parsed_json
 
-    def hashish?(thing)
-      thing.respond_to?(:fetch) && thing.respond_to?(:key?)
+      interpreter = HalClient::Interpreter.new(parsed_json, hal_client)
+
+      @properties = interpreter.extract_props
+
+      @links_by_rel =
+        interpreter
+        .extract_links
+        .reduce(Hash.new { |h,k| h[k] = Set.new }) { |links_tab, link|
+          links_tab[link.literal_rel] << link
+          links_tab[link.fully_qualified_rel] << link
+          links_tab
+        }
     end
 
     def_delegators :links, :namespaces

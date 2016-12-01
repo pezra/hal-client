@@ -38,16 +38,10 @@ RSpec.describe HalClient::Collection do
     end
 
     specify do
-      expect { described_class.new(non_collection_repr) }
-        .to raise_error HalClient::NotACollectionError
-    end
-
-    specify do
       expect { described_class.new(non_first_page) }
         .to raise_error ArgumentError, /first page/
     end
 
-    let(:non_collection_repr) { repr({}) }
     let(:non_first_page) { collection_page(prev_href: "http://example.com/p1") }
   end
 

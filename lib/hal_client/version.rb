@@ -1,3 +1,3 @@
 class HalClient
-  VERSION = "3.18.0"
+  VERSION = "4.0.0"
 end

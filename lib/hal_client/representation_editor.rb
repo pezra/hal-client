@@ -35,11 +35,17 @@ class HalClient
 
     # Returns true if this, or any previous, editor actually changed the hal
     # representation.
+    #
+    # ---
+    #
+    # Anonymous entries are hard to deal with in a logically clean way. We fudge
+    # it a bit by treating anonymous resources with the same raw value as equal.
     def dirty?
       new_repr = Representation.new(parsed_json: raw)
 
       orig_repr.properties != new_repr.properties ||
-        orig_repr.all_links != new_repr.all_links
+        sans_anon(orig_repr.all_links) != sans_anon(new_repr.all_links) ||
+        raw_anons(orig_repr.all_links) != raw_anons(new_repr.all_links)
     end
 
     # Returns the raw json representation of this representation
@@ -139,6 +145,18 @@ class HalClient
     protected
 
     attr_reader :orig_repr
+
+    def sans_anon(links)
+      links.reject { |l| AnonymousResourceLocator === l.raw_href}
+        .to_set
+    end
+
+    def raw_anons(links)
+      links
+        .select { |l| AnonymousResourceLocator === l.raw_href}
+        .map!{ |l| l.target.raw }
+        .to_set
+    end
 
     def Array(thing)
       if Hash === thing
