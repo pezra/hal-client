@@ -9,6 +9,10 @@ require 'hal_client/anonymous_resource_locator'
 class HalClient
   # HAL representation of a single resource. Provides access to
   # properties, links and embedded representations.
+  #
+  # Operations on a representation are not thread-safe.  If you'd like to
+  # use representations in a threaded environment, consider using the method
+  # #clone_for_use_in_different_thread to create a copy for each new thread
   class Representation
     extend Forwardable
 
@@ -41,6 +45,14 @@ class HalClient
 
       (fail ArgumentError, "Either parsed_json or href must be provided") if
         @raw.nil? && @href.nil?
+    end
+
+    # Returns a copy of this instance that is safe to use in threaded
+    # environments
+    def clone_for_use_in_different_thread
+      clone.tap do |c|
+        c.hal_client = c.hal_client.clone_for_use_in_different_thread
+      end
     end
 
     # Posts a `Representation` or `String` to this resource. Causes
@@ -297,12 +309,13 @@ class HalClient
       @raw
     end
 
-    # Returns the HalClient used to retrieve this representation
+    # Return the HalClient used to retrieve this representation
     attr_reader :hal_client
 
     protected
 
     attr_reader :links_by_rel
+    attr_writer :hal_client
 
     MISSING = Object.new
 
