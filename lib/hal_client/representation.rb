@@ -51,7 +51,9 @@ class HalClient
     # environments
     def clone_for_use_in_different_thread
       clone.tap do |c|
-        c.hal_client = c.hal_client.clone_for_use_in_different_thread
+        if c.hal_client
+          c.hal_client = c.hal_client.clone_for_use_in_different_thread
+        end
       end
     end
 
