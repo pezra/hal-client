@@ -186,8 +186,6 @@ class HalClient
     def related(link_rel, options = {}, &default_proc)
       default_proc ||= NO_RELATED_RESOURCE
 
-      ensure_reified
-
       related = links_by_rel
                 .fetch(link_rel) { return default_proc.call(link_rel) }
                 .map { |l| l.target(options) }
@@ -228,8 +226,6 @@ class HalClient
     #   and no default_proc is provided.
     def raw_related_hrefs(link_rel, &default_proc)
       default_proc ||= NO_RELATED_RESOURCE
-
-      ensure_reified
 
       links_by_rel
         .fetch(link_rel) { return default_proc.call(link_rel) }
@@ -314,7 +310,6 @@ class HalClient
 
     protected
 
-    attr_reader :links_by_rel
     attr_writer :hal_client
 
     MISSING = Object.new
@@ -352,6 +347,10 @@ class HalClient
           links_tab[link.fully_qualified_rel] << link
           links_tab
         }
+    end
+
+    def links_by_rel
+      @links_by_rel || ensure_reified
     end
 
     def_delegators :links, :namespaces
