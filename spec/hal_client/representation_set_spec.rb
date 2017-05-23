@@ -54,9 +54,9 @@ RSpec.describe HalClient::RepresentationSet do
 
     context "templated" do
       subject(:returned_val) { repr_set.related("cousin", distance: "first") }
-      it { is_expected.to include_representation_of "http://example.com/foo-first-cousin" }
-      it { is_expected.to include_representation_of "http://example.com/bar-paternal-first-cousin" }
-      it { is_expected.to include_representation_of "http://example.com/bar-maternal-first-cousin" }
+      specify { expect(subject.map{ |s| s.href.to_s }).to include("http://example.com/foo-first-cousin") }
+      specify { expect(subject.map{ |s| s.href.to_s }).to include("http://example.com/bar-paternal-first-cousin") }
+      specify { expect(subject.map{ |s| s.href.to_s }).to include("http://example.com/bar-maternal-first-cousin") }
       it { is_expected.to have(3).items }
     end
   end
