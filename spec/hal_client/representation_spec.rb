@@ -254,7 +254,8 @@ HAL
     context "for existent templated link" do
       subject { repr.related "templated", name: "bob" }
       it { is_expected.to have(1).item }
-      it { is_expected.to include_representation_of "http://example.com/people?name=bob"  }
+      specify { expect(subject.first.href.to_s).to eq(
+        "http://example.com/people?name=bob") }
     end
 
     context "for existent embedded" do
