@@ -47,7 +47,7 @@ class HalClient
     # Yields the next item of the iteration.
     def each(&blk)
       each_page do |a_page|
-        a_page.related("item").each(&blk)
+        a_page.related("item").each(&blk) if a_page.related?("item")
       end
     end
 
