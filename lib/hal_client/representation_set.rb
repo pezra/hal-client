@@ -34,9 +34,10 @@ class HalClient
     # (including embedded links) whose rel is `link_rel`.
     #
     # link_rel - The link rel of interest
-    def has_related?(link_rel)
+    def related?(link_rel)
       any? {|it| it.has_related?(link_rel) }
     end
+    alias_method :has_related?, :related?
 
     # Post a `Representation` or `String` to the resource.
     #
