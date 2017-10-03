@@ -1,6 +1,14 @@
 require 'hal_client/null_logger'
 
 class HalClient
+
+  # Retries http requests that meet certain conditions -- we want to retry if we got a 500 level
+  # (server) error but not if we got a 400 level (client) error. We want to retry if we rescue an
+  # HttpError (likely a network issue) but not more general exceptions that likely indicate another
+  # problem that should be surfaced.
+
+  # Example usage:
+  # Retryinator.call { fetch_http_response }
   class Retryinator
 
     attr_reader :max_tries, :interval, :logger
