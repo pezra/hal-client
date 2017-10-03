@@ -108,7 +108,7 @@ class HalClient
   class << self
     protected
 
-    def def_unsafe_request(method, retryable: false)
+    def def_unsafe_request(method)
       verb = method.to_s.upcase
 
       define_method(method) do |url, data, headers={}|
@@ -124,13 +124,35 @@ class HalClient
 
         begin
           client = client_for_post(override_headers: headers)
-          request_lambda = -> { client.request(method, url, body: req_body) }
           resp = bmtb("#{verb} <#{url}>") {
-            if retryable
-              retryinator.call { request_lambda.call }
-            else
-              request_lambda.call
-            end
+            client.request(method, url, body: req_body)
+          }
+          interpret_response resp
+
+        rescue HttpError => e
+          fail e.class.new("#{verb} <#{url}> failed with code #{e.response.status}", e.response)
+        end
+      end
+    end
+
+    def def_idempotent_unsafe_request(method)
+      verb = method.to_s.upcase
+
+      define_method(method) do |url, data, headers={}|
+        headers = auth_headers(url).merge(headers)
+
+        req_body = if data.respond_to? :to_hal
+                     data.to_hal
+                   elsif data.is_a? Hash
+                     data.to_json
+                   else
+                     data
+                   end
+
+        begin
+          client = client_for_post(override_headers: headers)
+          resp = bmtb("#{verb} <#{url}>") {
+            retryinator.call { client.request(method, url, body: req_body) }
           }
           interpret_response resp
 
@@ -153,7 +175,7 @@ class HalClient
   # url - The URL of the resource of interest.
   # data - a `String`, a `Hash` or an object that responds to `#to_hal`
   # headers - custom header fields to use for this request
-  def_unsafe_request :put, retryable: true
+  def_idempotent_unsafe_request :put
 
   # Patch a `Representation`, `String` or `Hash` to the resource identified at `url`.
   #
