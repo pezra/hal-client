@@ -22,7 +22,7 @@ class HalClient
       @logger = options.fetch(:logger, HalClient::NullLogger.new)
     end
 
-    def call(&block)
+    def retryable(&block)
       current_try = 1
 
       loop do

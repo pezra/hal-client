@@ -12,7 +12,7 @@ RSpec.describe HalClient::Retryinator do
 
     it "raises an error and tries the maximum number of times" do
       expect do
-        subject.call { never_the_charm.call }
+        subject.retryable { never_the_charm.call }
       end.to raise_error(HalClient::HttpError)
 
       expect(never_the_charm.attempts_made).to eq(max_tries)
@@ -23,11 +23,11 @@ RSpec.describe HalClient::Retryinator do
     let(:first_time_is_the_charm) { CharmMaker.new(1, mock_response) }
 
     it "returns the response" do
-      expect(subject.call {first_time_is_the_charm.call}).to eq(first_time_is_the_charm.response)
+      expect(subject.retryable {first_time_is_the_charm.call}).to eq(first_time_is_the_charm.response)
     end
 
     it "calls the block once" do
-      subject.call { first_time_is_the_charm.call }
+      subject.retryable { first_time_is_the_charm.call }
 
       expect(first_time_is_the_charm.attempts_made).to eq(1)
     end
@@ -41,13 +41,13 @@ RSpec.describe HalClient::Retryinator do
     let(:returns_error_reponses) { CharmMaker.new(1, mock_response) }
 
     it "retries the request the maximum number of times" do
-      subject.call { returns_error_reponses.call }
+      subject.retryable { returns_error_reponses.call }
 
       expect(returns_error_reponses.attempts_made).to eq(max_tries)
     end
 
     it "returns the response" do
-      expect(subject.call { returns_error_reponses.call }).to eq(returns_error_reponses.response)
+      expect(subject.retryable { returns_error_reponses.call }).to eq(returns_error_reponses.response)
     end
   end
 

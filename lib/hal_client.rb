@@ -98,7 +98,7 @@ class HalClient
   def get(url, headers={})
     headers = auth_headers(url).merge(headers)
     client = client_for_get(override_headers: headers)
-    resp = retryinator.call { bmtb("GET <#{url}>") { client.get(url) } }
+    resp = retryinator.retryable { bmtb("GET <#{url}>") { client.get(url) } }
     interpret_response resp
 
   rescue HttpError => e
@@ -152,7 +152,7 @@ class HalClient
         begin
           client = client_for_post(override_headers: headers)
           resp = bmtb("#{verb} <#{url}>") {
-            retryinator.call { client.request(method, url, body: req_body) }
+            retryinator.retryable { client.request(method, url, body: req_body) }
           }
           interpret_response resp
 
@@ -193,7 +193,7 @@ class HalClient
 
     begin
       client = client_for_post(override_headers: headers)
-      resp = bmtb("DELETE <#{url}>") { retryinator.call { client.request(:delete, url) } }
+      resp = bmtb("DELETE <#{url}>") { retryinator.retryable { client.request(:delete, url) } }
       interpret_response resp
     rescue HttpError => e
       fail e.class.new("DELETE <#{url}> failed with code #{e.response.status}", e.response)
