@@ -21,7 +21,7 @@ class HalClient
         begin
           result = yield block
 
-          if result.status.server_error?
+          if server_error?(result.code)
             logger.debug "Received a #{result.code} response with body:\n#{result.body}"
             return result if current_try >= max_tries
           else
@@ -36,6 +36,10 @@ class HalClient
         current_try += 1
         sleep interval
       end
+    end
+
+    def server_error?(status_code)
+      500 <= status_code && status_code < 600
     end
   end
 end

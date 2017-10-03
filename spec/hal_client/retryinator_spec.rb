@@ -4,8 +4,7 @@ require 'hal_client/retryinator'
 RSpec.describe HalClient::Retryinator do
 
   let(:max_tries) { 5 }
-  let(:status) { double(server_error?: false) }
-  let(:mock_response) { double(Http::Response, status: status, body: '', code: 'code')}
+  let(:mock_response) { double(Http::Response, body: '', code: 200)}
   subject { described_class.new(max_tries: max_tries, interval: 0) }
 
   context "the passed block always raises an error" do
@@ -36,7 +35,7 @@ RSpec.describe HalClient::Retryinator do
 
   context "the server returns an error response" do
     before do
-      allow(status).to receive(:server_error?).and_return(true)
+      allow(mock_response).to receive(:code).and_return(500)
     end
 
     let(:returns_error_reponses) { CharmMaker.new(1, mock_response) }
