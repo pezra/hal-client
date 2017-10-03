@@ -98,7 +98,7 @@ class HalClient
   def get(url, headers={})
     headers = auth_headers(url).merge(headers)
     client = client_for_get(override_headers: headers)
-    resp = bmtb("GET <#{url}>") { retryinator.call { client.get(url) } }
+    resp = retryinator.call { bmtb("GET <#{url}>") { client.get(url) } }
     interpret_response resp
 
   rescue HttpError => e
