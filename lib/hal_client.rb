@@ -52,9 +52,9 @@ class HalClient
     @logger = options.fetch(:logger, NullLogger.new)
     @timeout = options.fetch(:timeout, Float::INFINITY)
     @base_client_with_headers = {}
-    @retry_interval = options.fetch(:retry_interval, Retryinator::DEFAULT_INTERVAL)
+    @retry_duration = options.fetch(:retry_duration, Retryinator::DEFAULT_DURATION)
 
-    @retryinator = Retryinator.new(logger: logger, interval: retry_interval)
+    @retryinator = Retryinator.new(logger: logger, duration: retry_duration)
 
     default_message_request_headers.set('Accept', options[:accept]) if
       options[:accept]
@@ -202,7 +202,7 @@ class HalClient
 
   protected
 
-  attr_reader :headers, :auth_helper, :logger, :timeout, :retry_interval, :retryinator
+  attr_reader :headers, :auth_helper, :logger, :timeout, :retry_duration, :retryinator
 
   NullAuthHelper = ->(_url) { nil }
 

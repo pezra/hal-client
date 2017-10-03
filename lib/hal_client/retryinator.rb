@@ -11,14 +11,14 @@ class HalClient
   # Retryinator.call { fetch_http_response }
   class Retryinator
 
-    attr_reader :max_tries, :interval, :logger
+    attr_reader :max_tries, :duration, :logger
 
     DEFAULT_MAX_TRIES = 3
-    DEFAULT_INTERVAL = 1
+    DEFAULT_DURATION = 1
 
     def initialize(options={})
       @max_tries = options.fetch(:max_tries, DEFAULT_MAX_TRIES)
-      @interval = options.fetch(:interval, DEFAULT_INTERVAL)
+      @duration = options.fetch(:duration, DEFAULT_DURATION)
       @logger = options.fetch(:logger, HalClient::NullLogger.new)
     end
 
@@ -41,10 +41,10 @@ class HalClient
         end
 
         logger.warn "Failed attempt #{current_try} of #{max_tries}. " +
-                      "Waiting #{interval} seconds before retrying"
+                      "Waiting #{duration} seconds before retrying"
 
         current_try += 1
-        sleep interval
+        sleep duration
       end
     end
 

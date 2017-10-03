@@ -5,7 +5,7 @@ RSpec.describe HalClient::Retryinator do
 
   let(:max_tries) { 5 }
   let(:mock_response) { double(Http::Response, body: '', code: 200)}
-  subject { described_class.new(max_tries: max_tries, interval: 0) }
+  subject { described_class.new(max_tries: max_tries, duration: 0) }
 
   context "the passed block always raises an error" do
     let(:never_the_charm) { CharmMaker.new(:never, mock_response) }
