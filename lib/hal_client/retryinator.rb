@@ -30,17 +30,19 @@ class HalClient
           result = yield block
 
           if server_error?(result.code)
-            logger.debug "Received a #{result.code} response with body:\n#{result.body}"
+            logger.warn "Received a #{result.code} response with body:\n#{result.body}"
             return result if current_try >= max_tries
           else
             return result
           end
         rescue HttpError => e
-          logger.debug "Encountered an HttpError: #{e.message}"
+          logger.warn "Encountered an HttpError: #{e.message}"
           raise e if current_try >= max_tries
         end
 
-        logger.debug "Failed attempt #{current_try}"
+        logger.warn "Failed attempt #{current_try} of #{max_tries}. " +
+                      "Waiting #{interval} seconds before retrying"
+
         current_try += 1
         sleep interval
       end
