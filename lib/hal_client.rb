@@ -21,6 +21,8 @@ class HalClient
   autoload :HttpError, 'hal_client/errors'
   autoload :HttpClientError, 'hal_client/errors'
   autoload :HttpServerError, 'hal_client/errors'
+  autoload :NullLogger, 'hal_client/null_logger'
+  autoload :Retryinator, 'hal_client/retryinator'
 
   autoload :RepresentationEditor, 'hal_client/representation_editor'
 
@@ -50,6 +52,9 @@ class HalClient
     @logger = options.fetch(:logger, NullLogger.new)
     @timeout = options.fetch(:timeout, Float::INFINITY)
     @base_client_with_headers = {}
+    @retry_duration = options.fetch(:retry_duration, Retryinator::DEFAULT_DURATION)
+
+    @retryinator = Retryinator.new(logger: logger, duration: retry_duration)
 
     default_message_request_headers.set('Accept', options[:accept]) if
       options[:accept]
@@ -93,7 +98,7 @@ class HalClient
   def get(url, headers={})
     headers = auth_headers(url).merge(headers)
     client = client_for_get(override_headers: headers)
-    resp = bmtb("GET <#{url}>") { client.get(url) }
+    resp = retryinator.retryable { bmtb("GET <#{url}>") { client.get(url) } }
     interpret_response resp
 
   rescue HttpError => e
@@ -119,7 +124,36 @@ class HalClient
 
         begin
           client = client_for_post(override_headers: headers)
-          resp = bmtb("#{verb} <#{url}>") { client.request(method, url, body: req_body) }
+          resp = bmtb("#{verb} <#{url}>") {
+            client.request(method, url, body: req_body)
+          }
+          interpret_response resp
+
+        rescue HttpError => e
+          fail e.class.new("#{verb} <#{url}> failed with code #{e.response.status}", e.response)
+        end
+      end
+    end
+
+    def def_idempotent_unsafe_request(method)
+      verb = method.to_s.upcase
+
+      define_method(method) do |url, data, headers={}|
+        headers = auth_headers(url).merge(headers)
+
+        req_body = if data.respond_to? :to_hal
+                     data.to_hal
+                   elsif data.is_a? Hash
+                     data.to_json
+                   else
+                     data
+                   end
+
+        begin
+          client = client_for_post(override_headers: headers)
+          resp = bmtb("#{verb} <#{url}>") {
+            retryinator.retryable { client.request(method, url, body: req_body) }
+          }
           interpret_response resp
 
         rescue HttpError => e
@@ -141,7 +175,7 @@ class HalClient
   # url - The URL of the resource of interest.
   # data - a `String`, a `Hash` or an object that responds to `#to_hal`
   # headers - custom header fields to use for this request
-  def_unsafe_request :put
+  def_idempotent_unsafe_request :put
 
   # Patch a `Representation`, `String` or `Hash` to the resource identified at `url`.
   #
@@ -159,7 +193,7 @@ class HalClient
 
     begin
       client = client_for_post(override_headers: headers)
-      resp = bmtb("DELETE <#{url}>") { client.request(:delete, url) }
+      resp = bmtb("DELETE <#{url}>") { retryinator.retryable { client.request(:delete, url) } }
       interpret_response resp
     rescue HttpError => e
       fail e.class.new("DELETE <#{url}> failed with code #{e.response.status}", e.response)
@@ -168,7 +202,7 @@ class HalClient
 
   protected
 
-  attr_reader :headers, :auth_helper, :logger, :timeout
+  attr_reader :headers, :auth_helper, :logger, :timeout, :retry_duration, :retryinator
 
   NullAuthHelper = ->(_url) { nil }
 
@@ -341,10 +375,4 @@ class HalClient
     end
   end
   extend EntryPointCovenienceMethods
-
-
-  class NullLogger
-    def info(*_); end
-    def debug(*_); end
-  end
 end

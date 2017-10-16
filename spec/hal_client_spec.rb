@@ -7,7 +7,7 @@ RSpec.describe HalClient do
     it { is_expected.to be_kind_of HalClient }
   end
 
-  subject(:client) { HalClient.new }
+  subject(:client) { HalClient.new(retry_duration: 0) }
 
   describe '.new w/ custom accept' do
     subject { HalClient.new(accept: "application/vnd.myspecialmediatype") }
