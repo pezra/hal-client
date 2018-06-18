@@ -115,6 +115,124 @@ RSpec.describe HalClient::RepresentationSet do
     end
   end
 
+  describe "#form" do
+    context "single representation with default form" do
+      subject(:repr_single_set) { described_class.new([repr_with_default_form]) }
+
+      specify { expect(
+                  subject.form
+                ).to behave_like_a HalClient::Form }
+
+      specify { expect(
+                  subject.form
+                ).to target "default-form" }
+
+      specify { expect(
+                  subject.form("default")
+                ).to behave_like_a HalClient::Form }
+
+      specify { expect(
+                  subject.form("default")
+                ).to target "default-form" }
+
+    end
+
+    context "multiple representations with default form" do
+      subject(:repr_single_set) { described_class.new([repr_with_default_form,
+                                                       repr_with_default_form]) }
+
+      specify { expect{
+                  subject.form
+                }.to raise_error KeyError }
+
+      specify { expect{
+                  subject.form("default")
+                }.to raise_error KeyError }
+
+      specify { expect{
+                  subject.form(:default)
+                }.to raise_error KeyError }
+    end
+
+    context "multiple representations with unique forms" do
+      subject(:repr_single_set) { described_class.new([repr_with_default_form,
+                                                       repr_with_foo_form]) }
+
+      specify { expect(
+                  subject.form
+                ).to behave_like_a HalClient::Form }
+
+      specify { expect(
+                  subject.form
+                ).to target "default-form" }
+
+      specify { expect(
+                  subject.form("default")
+                ).to behave_like_a HalClient::Form }
+
+      specify { expect(
+                  subject.form("default")
+                ).to target "default-form" }
+
+
+      specify { expect(
+                  subject.form("foo")
+                ).to target "foo-form" }
+
+      specify { expect(
+                  subject.form("foo")
+                ).to behave_like_a HalClient::Form }
+
+      specify { expect(
+                  subject.form(:foo)
+                ).to target "foo-form" }
+
+      specify { expect(
+                  subject.form(:foo)
+                ).to behave_like_a HalClient::Form }
+
+    end
+
+    matcher :target do |expected_target_url|
+      match do |actual_form|
+        expect(actual_form.target_url.to_s).to eq expected_target_url
+      end
+    end
+
+    let(:repr_with_default_form) {
+      HalClient::Representation.new(
+        hal_client: a_client,
+        parsed_json: inject_form(form_json(target: "default-form"), as: "default",
+                                 into: {}))
+    }
+
+    let(:repr_with_foo_form) {
+      HalClient::Representation.new(
+        hal_client: a_client,
+        parsed_json: inject_form(form_json(target: "foo-form"), as: "foo",
+                                 into: {}))
+    }
+
+    def inject_form(form_json, as:, into: )
+      into["_forms"] ||= {}
+      into["_forms"][as] = form_json
+
+      into
+    end
+
+    def form_json(target:)
+      { "_links" => {
+          "target" => {
+            "href" => target
+          }
+        },
+        "method" => "GET",
+        "fields" => []
+      }
+    end
+  end
+
+
   let(:a_client) { HalClient.new }
 
   let(:foo_repr) { HalClient::Representation.new hal_client: a_client, parsed_json: MultiJson.load(foo_hal)}

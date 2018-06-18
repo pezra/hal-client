@@ -72,6 +72,27 @@ class HalClient
       first.patch(data, options)
     end
 
+
+    # Returns the specified `Form`
+    #
+    # form_id - the string or symbol id of the form of interest. Default: `"default"`
+    #
+    # Raises `KeyError` if the specified form doesn't exist, or if there are duplicates.
+    def form(form_id="default")
+      self
+        .map { |r|
+          begin
+            r.form(form_id)
+          rescue KeyError
+            nil
+          end }
+        .compact
+        .tap do |fs|
+          raise KeyError, "Duplicate `#{form_id}` forms exist" if fs.count > 1
+        end
+        .first
+    end
+
     protected
 
     attr_reader :reprs
