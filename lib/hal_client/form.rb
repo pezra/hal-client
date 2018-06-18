@@ -5,7 +5,7 @@ class HalClient
 
   # A single [Dwolla HAL
   # form](https://github.com/Dwolla/hal-forms). Instances of this
-  # class allow client so complete and submit individual forms.
+  # class allow clients to complete and submit individual forms.
   #
   # This is an incomplete implementation of the spec. Thus far it
   # supports string and hidden fields with JSON encoding. Enhancements
@@ -34,7 +34,7 @@ class HalClient
     # the form.
     #
     # answers - `Hash` containing the answer key to submit. Keys are
-    # be the field names; values are the values to submit.
+    #   the field names; values are the values to submit.
     def submit(answers={})
       if :get == method
         hal_client.get(target_url(answers))

@@ -33,7 +33,6 @@ class HalClient
       attr_reader :aliases, :value, :type
 
       def coerce_value(val)
-        return val if :hidden == type
         return nil if val.nil?
 
         val.to_s

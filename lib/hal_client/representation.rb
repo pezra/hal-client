@@ -5,6 +5,7 @@ require 'hal_client'
 require 'hal_client/representation_set'
 require 'hal_client/interpreter'
 require 'hal_client/anonymous_resource_locator'
+require 'hal_client/form'
 
 class HalClient
   # HAL representation of a single resource. Provides access to
@@ -261,6 +262,18 @@ class HalClient
           result
         }
     end
+
+    # Returns the specified `Form`
+    #
+    # form_id - the string or symbol id of the form of interest. Default: `"default"`
+    #
+    # Raises `KeyError` if the specified form doesn't exist.
+    def form(form_id="default")
+      parsed_form_json = property("_forms").fetch(form_id.to_s)
+
+      Form.new(parsed_form_json, hal_client)
+    end
+
 
     # Resets this representation such that it will be requested from
     # the upstream on it's next use.

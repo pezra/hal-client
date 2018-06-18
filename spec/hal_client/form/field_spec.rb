@@ -2,35 +2,40 @@ require "hal_client/form/field"
 
 RSpec.describe HalClient::Form::Field do
   describe ".new" do
-    specify { expect(
-                described_class.new({"name" => "rating", "type" => "string"})
-              ).to behave_like_a described_class }
-    specify { expect(
-                described_class.new({ "name" => "rating",
-                                      "type" => "string",
-                                      "path" => "/foo/bar",
-                                      "value" => "ok",
-                                      "displayText" => "Rating",
-                                      "validations" => {
-                                        "required" => true,
-                                        "regex" => "(good)|(ok)|(bad)"
-                                      },
-                                      "multiple" => true,
-                                      "accepted" => {
-                                        "groupedValues" => [
-                                          { "key" => "group1",
-                                            "displayText" => "Group 1",
-                                            "values" => [
-                                              { "value" => "val1id",
-                                                "key" => "val1",
-                                                "displayText" => "Value 1"
-                                              }
-                                            ]
-                                          }
-                                        ]
+    it "works for simplest legal form field" do
+      expect(
+        described_class.new({"name" => "rating", "type" => "string"})
+      ).to behave_like_a described_class
+    end
+
+    it "works for complex field" do
+      expect(
+        described_class.new({ "name" => "rating",
+                              "type" => "string",
+                              "path" => "/foo/bar",
+                              "value" => "ok",
+                              "displayText" => "Rating",
+                              "validations" => {
+                                "required" => true,
+                                "regex" => "(good)|(ok)|(bad)"
+                              },
+                              "multiple" => true,
+                              "accepted" => {
+                                "groupedValues" => [
+                                  { "key" => "group1",
+                                    "displayText" => "Group 1",
+                                    "values" => [
+                                      { "value" => "val1id",
+                                        "key" => "val1",
+                                        "displayText" => "Value 1"
                                       }
-                                    })
-              ).to behave_like_a described_class }
+                                    ]
+                                  }
+                                ]
+                              }
+                            })
+      ).to behave_like_a described_class
+    end
   end
 
   describe "#extract_answer(answers)" do

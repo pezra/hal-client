@@ -119,6 +119,98 @@ HAL
     end
   end
 
+  describe "#form" do
+    context "default form" do
+      subject(:repr) {
+        HalClient::Representation.new(
+          hal_client: a_client,
+          parsed_json: inject_form(form_json(target: "default-form"), as: "default",
+                                   into: {}))
+      }
+
+      specify { expect(
+                  repr.form
+                ).to target "default-form" }
+
+      specify { expect(
+                  repr.form
+                ).to behave_like_a HalClient::Form }
+
+      specify { expect(
+                  repr.form("default")
+                ).to target "default-form" }
+
+      specify { expect(
+                  repr.form("default")
+                ).to behave_like_a HalClient::Form }
+    end
+
+    context "non-default form" do
+      subject(:repr) {
+        HalClient::Representation.new(
+          hal_client: a_client,
+          parsed_json: inject_form(form_json(target: "foo-form"), as: "foo", into: {}))
+      }
+
+      specify { expect(
+                  repr.form("foo")
+                ).to target "foo-form" }
+
+      specify { expect(
+                  repr.form(:foo)
+                ).to target "foo-form"
+      }
+
+      specify { expect{
+                  repr.form("nonexistent")
+                }.to raise_error KeyError }
+    end
+
+    context "multiple forms" do
+      subject(:repr) {
+        HalClient::Representation.new(
+          hal_client: a_client,
+          parsed_json: {}.tap { |hal|
+            inject_form(form_json(target: "foo-form"), as: "foo", into: hal)
+            inject_form(form_json(target: "bar-form"), as: "bar", into: hal)
+          }
+        )
+      }
+
+      specify { expect(
+                  repr.form("foo")
+                ).to target "foo-form" }
+
+      specify { expect(
+                  repr.form("bar")
+                ).to target "bar-form" }
+    end
+
+    matcher :target do |expected_target_url|
+      match do |actual_form|
+        expect(actual_form.target_url.to_s).to eq expected_target_url
+      end
+    end
+
+    def inject_form(form_json, as:, into: )
+      into["_forms"] ||= {}
+      into["_forms"][as] = form_json
+
+      into
+    end
+
+    def form_json(target:)
+      { "_links" => {
+          "target" => {
+            "href" => target
+          }
+        },
+        "method" => "GET",
+        "fields" => []
+      }
+    end
+  end
+
   context "equality and hash" do
     let(:repr_same_href) { described_class.new(hal_client: a_client,
                                          parsed_json: MultiJson.load(<<-HAL)) }

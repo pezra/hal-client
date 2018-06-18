@@ -138,7 +138,7 @@ This removes the obsolete link to "John Doe" from the documents list of authors 
 
 ### Forms
 
-HalClient supports [Dwolla HAL forms](https://github.com/Dwolla/hal-forms). For example, give a collection with a [`create-form`](https://tools.ietf.org/html/rfc6861#section-3.1) link to a resource with a [`default`](https://github.com/Dwolla/hal-forms#properties) form that create new members of the collection, the following code would create a new member of `http://example.com/somecollection`.
+HalClient supports [Dwolla HAL forms](https://github.com/Dwolla/hal-forms). For example, given a collection with a [`create-form`](https://tools.ietf.org/html/rfc6861#section-3.1) link to a resource with a [`default`](https://github.com/Dwolla/hal-forms#properties) form that creates new members of the collection, the following code would create a new member of `http://example.com/somecollection`.
 
 
 ```ruby
