@@ -136,6 +136,21 @@ doc.put(improved_doc)                                                   # save c
 
 This removes the obsolete link to "John Doe" from the documents list of authors and replaces it with the correct link then performs an HTTP PUT request with the updated document.
 
+### Forms
+
+HalClient supports [Dwolla HAL forms](https://github.com/Dwolla/hal-forms). For example, given a collection with a [`create-form`](https://tools.ietf.org/html/rfc6861#section-3.1) link to a resource with a [`default`](https://github.com/Dwolla/hal-forms#properties) form that creates new members of the collection, the following code would create a new member of `http://example.com/somecollection`.
+
+
+```ruby
+collection = HalClient.get("http://example.com/somecollection")
+create_form = collection.related("create-form").form
+create_form.submit(
+  name: "my item",
+  author_url: URI("http://example.com/john-doe")
+  description: "super duper!"
+)
+
+```
 ### Custom media types
 
 If the API uses one or more a custom mime types we can specify that they be included in the `Accept` header field of each request.
