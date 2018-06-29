@@ -122,6 +122,7 @@ class HalClient
     # opts
     #   :templated - is this link templated? Default: false
     def add_link(rel, target, opts={})
+      raise ArgumentError, "target must not be nil or empty" if target.nil? || target.empty?
       templated = opts.fetch(:templated, false)
 
       link_obj = { "href" => target.to_s }

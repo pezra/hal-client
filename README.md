@@ -188,6 +188,10 @@ Or install it yourself as:
 
     $ gem install hal-client
 
+## Upgrading from 4.x to 5.x
+
+`HalClient::RepresentationEditor#add_link` now raises if passed nil or empty values. This is the only breaking change.
+
 ## Upgrading from 3.x to 4.x
 
 Support for ruby 2.0 has been removed. Please upgrade to ruby 2.1 or later. No other breaking changes were made.

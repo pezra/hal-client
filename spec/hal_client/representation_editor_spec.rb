@@ -122,6 +122,14 @@ RSpec.describe HalClient::RepresentationEditor do
              .and have_link("about", with_href("http://example.com/another"))
     end
 
+    it "raises if target is nil" do
+      expect { subject.add_link("nowhere", nil) }.to raise_error(ArgumentError)
+    end
+
+    it "raises if target is empty" do
+      expect { subject.add_link("nowhere", "") }.to raise_error(ArgumentError)
+    end
+
     it "adds templated links" do
       expect(subject.add_link("related", "http://example.com/third{?wat}", templated: true))
         .to have_link "related", with_href("http://example.com/third{?wat}")
