@@ -4,7 +4,7 @@ require "hal_client/link"
 
 RSpec.describe HalClient::Link do
 
-  subject(:link) { HalClient::SimpleLink.new(rel: rel_1, target: repr_1) }
+  subject(:link) { HalClient::SimpleLink.new(rel: rel_1, target: repr_1, embedded: false) }
 
   describe "#initialize" do
     it "requires a target" do
@@ -13,13 +13,13 @@ RSpec.describe HalClient::Link do
 
     it "doesn't allow both target and template" do
       expect {
-        HalClient::SimpleLink.new(rel: rel_1, target: repr_1, template: template_1)
+        HalClient::SimpleLink.new(rel: rel_1, target: repr_1, template: template_1, embedded: false)
       }.to raise_error(ArgumentError)
     end
 
     it "requires target to be a Representation" do
       expect {
-        HalClient::SimpleLink.new(rel: rel_1, target: template_1)
+        HalClient::SimpleLink.new(rel: rel_1, target: template_1, embedded: false)
       }.to raise_error(ArgumentError)
     end
 
@@ -42,14 +42,27 @@ RSpec.describe HalClient::Link do
     specify { expect(templated_link1.templated?).to be true }
   end
 
+  describe "#embedded?" do
+    context "direct link " do
+      subject(:link) { HalClient::SimpleLink.new(rel: rel_1, target: repr_1, embedded: false) }
+      specify { expect(subject.embedded?).to be false }
+    end
+
+    context "embedded link " do
+      subject(:link) { HalClient::SimpleLink.new(rel: rel_1, target: repr_1, embedded: true) }
+      specify { expect(subject.embedded?).to be true }
+    end
+  end
+
   context "equality and hash" do
-    let(:link_same_target_same_rel) { HalClient::SimpleLink.new(target: repr_1, rel: rel_1) }
+    let(:link_same_target_same_rel) { HalClient::SimpleLink.new(target: repr_1, rel: rel_1, embedded: false) }
 
-    let(:link_same_target_diff_rel) { HalClient::SimpleLink.new(target: repr_1, rel: rel_2) }
-    let(:link_diff_target_same_rel) { HalClient::SimpleLink.new(target: repr_2, rel: rel_1) }
-    let(:link_diff_target_diff_rel) { HalClient::SimpleLink.new(target: repr_2, rel: rel_2) }
+    let(:link_same_target_diff_rel) { HalClient::SimpleLink.new(target: repr_1, rel: rel_2, embedded: false) }
+    let(:link_diff_target_same_rel) { HalClient::SimpleLink.new(target: repr_2, rel: rel_1, embedded: false) }
+    let(:link_diff_target_diff_rel) { HalClient::SimpleLink.new(target: repr_2, rel: rel_2, embedded: false) }
 
-    let(:link_same_non_fetched) { HalClient::SimpleLink.new(target: href_only_repr, rel: rel_1) }
+
+    let(:link_same_non_fetched) { HalClient::SimpleLink.new(target: href_only_repr, rel: rel_1, embedded: false) }
 
     let(:same_as_templated_link1) do
       HalClient::TemplatedLink
@@ -90,7 +103,7 @@ RSpec.describe HalClient::Link do
       specify { expect(link == Object.new).to eq false }
     end
 
-    describe ".eql?" do
+    describe "#eql?" do
       specify { expect(link.eql? link_same_target_same_rel).to eq true }
       specify { expect(link.eql? link_same_non_fetched).to eq true }
 
@@ -108,7 +121,7 @@ RSpec.describe HalClient::Link do
       specify { expect(link.eql? Object.new).to eq false }
     end
 
-    describe "hash" do
+    describe "#hash" do
       specify{ expect(link.hash).to eq link_same_target_same_rel.hash }
       specify{ expect(link.hash).to eq link_same_non_fetched.hash }
 
@@ -135,7 +148,7 @@ RSpec.describe HalClient::Link do
   let(:rel_2) { 'rel_2' }
 
   let(:full_uri_rel_1) { 'http://example.com/rels/rel_1' }
-  let(:full_uri_link_1) { HalClient::SimpleLink.new(rel: full_uri_rel_1, target: repr_1) }
+  let(:full_uri_link_1) { HalClient::SimpleLink.new(rel: full_uri_rel_1, target: repr_1, embedded: false) }
 
   let(:curie_resolver) do
     HalClient::CurieResolver.new({
@@ -148,7 +161,7 @@ RSpec.describe HalClient::Link do
   let(:curied_rel_1) { 'ex:rel_1' }
 
   let(:curied_link_1) do
-    HalClient::SimpleLink.new(rel: curied_rel_1, target: repr_1, curie_resolver: curie_resolver)
+    HalClient::SimpleLink.new(rel: curied_rel_1, target: repr_1, curie_resolver: curie_resolver, embedded: false)
   end
 
   let(:href_1) { 'http://example.com/href_1' }

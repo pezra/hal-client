@@ -18,7 +18,8 @@ module CustomMatchers
 
   matcher :be_equivalent_json_to do |expected_json|
     match do |actual_json|
-      MultiJson.load(json(expected_json)) == MultiJson.load(json(actual_json))
+      HalClient::Interpreter.new(MultiJson.load(json(expected_json))).extract_repr ==
+        HalClient::Interpreter.new(MultiJson.load(json(actual_json))).extract_repr
     end
 
     protected

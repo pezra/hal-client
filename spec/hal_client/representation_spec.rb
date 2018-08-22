@@ -30,7 +30,6 @@ HAL
 
   describe "#post" do
     let!(:post_request) { stub_request(:post, repr.href).to_return(body: "{}") }
-    let!(:reload_request) { stub_request(:get, repr.href).to_return(body: raw_repr) }
 
     specify { expect(repr.post("abc")).to be_kind_of HalClient::Representation }
 
@@ -48,9 +47,10 @@ HAL
           .to have_been_made
       end
 
-      it("refetches repr afterwards") do
-        repr.property("prop1")
-        expect(reload_request).to have_been_made
+      it("invalidates repr afterwards") do
+        expect{
+          repr.property("prop1")
+        }.to raise_error(HalClient::StaleRepresentationError)
       end
     end
   end
@@ -72,9 +72,10 @@ HAL
           .to have_been_made
       end
 
-      it("refetches repr afterwards") do
-        repr.property("prop1")
-        expect(reload_request).to have_been_made
+      it("invalidates repr afterwards") do
+        expect{
+          repr.property("prop1")
+        }.to raise_error(HalClient::StaleRepresentationError)
       end
     end
   end
@@ -97,9 +98,10 @@ HAL
           .to have_been_made
       end
 
-      it("refetches repr afterwards") do
-        repr.property("prop1")
-        expect(reload_request).to have_been_made
+      it("invalidates repr afterwards") do
+        expect{
+          repr.property("prop1")
+        }.to raise_error(HalClient::StaleRepresentationError)
       end
     end
   end
@@ -222,7 +224,7 @@ HAL
     { "_links": { "self": { "href": "http://DIFFERENT" } } }
     HAL
     let(:repr_no_href) { described_class.new(hal_client: a_client,
-                                         parsed_json: MultiJson.load(<<-HAL)) }
+                                             parsed_json: MultiJson.load(<<-HAL)) }
     { }
     HAL
 
@@ -522,11 +524,11 @@ HAL
 
 
   let(:link1_link) do
-    HalClient::SimpleLink.new(rel: 'link1', target: link1_repr)
+    HalClient::SimpleLink.new(rel: 'link1', target: link1_repr, embedded: false)
   end
 
   let(:link2_link) do
-    HalClient::SimpleLink.new(rel: 'link2', target: link1_repr)
+    HalClient::SimpleLink.new(rel: 'link2', target: link1_repr, embedded: false)
   end
 
   let(:templated_link) do
@@ -536,11 +538,11 @@ HAL
   end
 
   let(:link3a_link) do
-    HalClient::SimpleLink.new(rel: 'link3', target: link3a_repr)
+    HalClient::SimpleLink.new(rel: 'link3', target: link3a_repr, embedded: false)
   end
 
   let(:link3b_link) do
-    HalClient::SimpleLink.new(rel: 'link3', target: link3b_repr)
+    HalClient::SimpleLink.new(rel: 'link3', target: link3b_repr, embedded: false)
   end
 
 

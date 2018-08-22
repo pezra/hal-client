@@ -13,19 +13,19 @@ class HalClient
     # https://tools.ietf.org/html/draft-kelly-json-hal-07#section-4.1
     RESERVED_PROPERTIES = ['_links', '_embedded'].freeze
 
-    def initialize(parsed_json, hal_client, location=nil)
+    def initialize(parsed_json, hal_client=nil, location=nil)
       (fail InvalidRepresentationError,
             "Invalid HAL representation: #{parsed_json.inspect}") unless
         hashish?(parsed_json)
 
       @raw = parsed_json
       @hal_client = hal_client
-      @location = location
+      @location = figure_effective_location(location)
     end
 
     # Returns `HalClient::Representation` version of the json provided
     def extract_repr()
-      Representation.new(hal_client: hal_client, parsed_json: raw, href: location)
+      Representation.new(location, extract_props, extract_links, hal_client)
     end
 
     # Returns hash of properties from `parsed_json`
@@ -34,12 +34,24 @@ class HalClient
     end
 
     def extract_links()
-      extract_embedded_links +  extract_basic_links
+      @links ||= extract_embedded_links +  extract_basic_links
     end
 
     protected
 
     attr_reader :raw, :hal_client, :location
+
+    def figure_effective_location(location)
+      return location if location
+
+      self_link = extract_links.find{|l| l.literal_rel == "self"}
+
+      if self_link
+        self_link.target_url
+      else
+        AnonymousResourceLocator.new
+      end
+    end
 
     def hashish?(obj)
       obj.respond_to?(:[]) &&
@@ -60,8 +72,8 @@ class HalClient
       raw
         .fetch("_embedded") { Hash.new }
         .flat_map { |rel, embedded_json|
-          build_embedded_links(rel, embedded_json)
-      }
+           build_embedded_links(rel, embedded_json)
+        }
         .compact
         .to_set
     end
@@ -81,16 +93,17 @@ class HalClient
     def build_embedded_links(rel, targets_json)
       arrayify(targets_json)
         .map{ |target_json|
-          target_repr = Representation.new(parsed_json: target_json, hal_client: hal_client)
+          target_repr = Interpreter.new(target_json, hal_client).extract_repr
 
           SimpleLink.new(rel: rel,
                          target: target_repr,
-                         curie_resolver: curie_resolver)
+                         curie_resolver: curie_resolver,
+                         embedded: true)
         }
 
-    rescue InvalidRepresentationError
+    rescue InvalidRepresentationError => e
       MalformedLink.new(rel: rel,
-                        msg: "/_embedded/#{jpointer_esc(rel)} is invalid",
+                        msg: "/_embedded/#{jpointer_esc(rel)} is invalid (cause: #{e.message})",
                         curie_resolver: curie_resolver)
     end
 
@@ -116,11 +129,12 @@ class HalClient
       target_url = info.fetch("href") { fail InvalidRepresentationError }
       return nil unless target_url
 
-      target_repr = Representation.new(href: target_url, hal_client: hal_client)
+      target_repr = RepresentationFuture.new(target_url, hal_client)
 
       SimpleLink.new(rel: rel,
                      target: target_repr,
-                     curie_resolver: curie_resolver)
+                     curie_resolver: curie_resolver,
+                     embedded: false)
 
     rescue InvalidRepresentationError
       MalformedLink.new(rel: rel,

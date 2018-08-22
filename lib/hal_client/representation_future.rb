@@ -11,10 +11,49 @@ class HalClient
       @hal_client = hal_client
     end
 
+    # Returns short string representation of this object.
+    #
+    # ---
+    #
+    # We implement this to prevent premature reification. `to_s`ing
+    # should not cause an HTTP request.
+    def to_s
+      "#<HalClient::RepresentationFuture: #{href}>"
+    end
+
+    # Returns detailed string representation of this object.
+    #
+    # ---
+    #
+    # We implement this to prevent premature reification. `inspect`ing
+    # should not cause an HTTP request.
+    def inspect
+      if reified?
+        "#<HalClient::RepresentationFuture: #{__getobj__.inspect}>"
+      else
+        "#<HalClient::RepresentationFuture: #{href} (unreified)>"
+      end
+    end
+
+    # Returns well formatted detailed string representation of this
+    # object.
+    #
+    # ---
+    #
+    # We implement this to prevent premature reification. `inspect`ing
+    # should not cause an HTTP request.
+    def pretty_print(_printer=nil)
+      inspect
+    end
+
     attr_reader :href, :hal_client
 
     def methods
       self.class.instance_methods
+    end
+
+    def reified?
+      !@reified_repr.nil?
     end
 
     def __getobj__

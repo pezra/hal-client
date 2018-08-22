@@ -1,19 +1,18 @@
 require 'forwardable'
 require 'addressable/template'
 
-require 'hal_client'
-require 'hal_client/representation_set'
-require 'hal_client/interpreter'
-require 'hal_client/anonymous_resource_locator'
-require 'hal_client/form'
+require_relative '../hal_client'
+require_relative 'errors'
+require_relative 'representation_set'
+require_relative 'interpreter'
+require_relative 'anonymous_resource_locator'
+require_relative 'form'
 
 class HalClient
   # HAL representation of a single resource. Provides access to
   # properties, links and embedded representations.
   #
-  # Operations on a representation are not thread-safe.  If you'd like to
-  # use representations in a threaded environment, consider using the method
-  # #clone_for_use_in_different_thread to create a copy for each new thread
+  # Operations on a representation are not thread-safe.
   class Representation
     extend Forwardable
 
@@ -31,21 +30,41 @@ class HalClient
 
     private_constant :NO_RELATED_RESOURCE, :NO_EMBED_FOUND, :NO_LINK_FOUND
 
+    class << self
+      # Create a new Representation
+      #
+      # Signature
+      #   new(parsed_json:, href: nil, hal_client: nil)
+      #   new(href:, hal_client:)
+      #   new(props, links, hal_client)
+      #
+      def new(*args)
+        if args.count == 1 && (opts=args.first).key?(:parsed_json)
+          # deprecated options style creation
+          Interpreter.new(opts[:parsed_json], opts[:hal_client], opts[:href]).extract_repr
+
+        elsif args.count == 1 && args.first.key?(:href)
+          # deprecated options style creation
+          RepresentationFuture.new(opts[:href],
+                                   opts.fetch(:hal_client){raise ArgumentError, "you must specify parsed_json or hal_client"})
+
+        else
+          super(*args)
+        end
+      end
+    end
+
     # Create a new Representation
     #
-    # options - name parameters
-    #   :parsed_json - A hash structure representing a single HAL
-    #     document.
-    #   :href - The href of this representation.
-    #   :hal_client - The HalClient instance to use when navigating.
-    def initialize(options)
-      @hal_client = options[:hal_client]
-      @href = options[:href]
-
-      interpret options[:parsed_json] if options[:parsed_json]
-
-      (fail ArgumentError, "Either parsed_json or href must be provided") if
-        @raw.nil? && @href.nil?
+    # location - the location of the resource this represents
+    # properties - `Hash` of properties
+    # links - `Enumerable` of `Link`s
+    # hal_client - `HalClient` to use for navigation
+    def initialize(location, properties, links, hal_client)
+      @href = location
+      @hal_client = hal_client
+      @properties = properties
+      @links_by_rel = index_links(links)
     end
 
     # Returns a copy of this instance that is safe to use in threaded
@@ -65,7 +84,7 @@ class HalClient
     # options - set of options to pass to `HalClient#post`
     def post(data, options={})
       @hal_client.post(href, data, options).tap do
-        reset
+        stale!
       end
     end
 
@@ -76,7 +95,7 @@ class HalClient
     # options - set of options to pass to `HalClient#put`
     def put(data, options={})
       @hal_client.put(href, data, options).tap do
-        reset
+        stale!
       end
     end
 
@@ -87,7 +106,7 @@ class HalClient
     # options - set of options to pass to `HalClient#patch`
     def patch(data, options={})
       @hal_client.patch(href, data, options).tap do
-        reset
+        stale!
       end
     end
 
@@ -96,7 +115,6 @@ class HalClient
     #
     # name - the name of the property to check
     def property?(name)
-      ensure_reified
       properties.key? name
     end
     alias_method :has_property?, :property?
@@ -114,8 +132,6 @@ class HalClient
     # Raises KeyError if the specified property does not exist
     #   and no default nor default_proc is provided.
     def property(name, default=MISSING, &default_proc)
-      ensure_reified
-
       default_proc ||= ->(_){ default} if default != MISSING
 
       properties.fetch(name.to_s, &default_proc)
@@ -124,15 +140,13 @@ class HalClient
     # Returns a Hash including the key-value pairs of all the properties
     #   in the resource. It does not include HAL's reserved
     #   properties (`_links` and `_embedded`).
-    attr_reader :properties
+    def properties
+      (fail StaleRepresentationError) if @stale
 
-    # Returns the URL of the resource this representation represents.
-    def href
-      @href ||= raw
-              .fetch("_links",{})
-              .fetch("self",{})
-              .fetch("href", AnonymousResourceLocator.new)
+      @properties
     end
+    # Returns the URL of the resource this represents.
+    attr_reader :href
 
     # Returns the value of the specified property or representations
     #   of resources related via the specified link rel or the
@@ -275,17 +289,24 @@ class HalClient
     end
 
 
-    # Resets this representation such that it will be requested from
-    # the upstream on it's next use.
-    def reset
-      @href = href # make sure we have the href
-      @raw = nil
+    # Mark this representation as stale. Used to flag representations
+    # that have been updated on the server at such.
+    def stale!
+      @stale=true
     end
 
     # Returns a short human readable description of this
     # representation.
     def to_s
       "#<" + self.class.name + ": " + href.to_s  + ">"
+    end
+
+    def inspect
+      %Q|#<#{self.class.name}: @properties=#{properties} @links=#{all_links}">|
+    end
+
+    def pretty_print
+      inspect
     end
 
     # Returns the raw json representation of this representation
@@ -313,11 +334,17 @@ class HalClient
     end
     alias :eql? :==
 
-    # Returns raw parsed json.
+    # Returns a JSON hash semantically equivalent to, but not exactly
+    # the same as, the JSON that was parsed to create this
+    # representation.
+    #
+    # ---
+    #
+    # Hard to know what to do with embedding. We don't currently know if the 
     def raw
-      ensure_reified
-
-      @raw
+      hsh = properties
+            .merge("_links" => links_hash,
+                   "_embedded" => embedded_hash)
     end
 
     # Return the HalClient used to retrieve this representation
@@ -325,47 +352,38 @@ class HalClient
 
     protected
 
-    attr_writer :hal_client
-
     MISSING = Object.new
 
-    # Fetch the representation from origin server if that has not already
-    # happened.
-    def ensure_reified
-      return if @raw
-      (fail "unable to make requests due to missing hal client") unless hal_client
-      (fail "unable to make requests due to missing href") unless @href
+    attr_writer :hal_client
 
-      response = hal_client.get(@href)
+    def links_by_rel
+      (fail StaleRepresentationError) if @stale
 
-      unless response.is_a?(Representation)
-        error_message = "Response body wasn't a valid HAL document:\n\n"
-        error_message += response.body
-        raise InvalidRepresentationError.new(error_message)
-      end
-
-      interpret response.raw
+      @links_by_rel
     end
 
-    def interpret(parsed_json)
-      @raw = parsed_json
+    def links_hash
+      all_links
+        .reject{|l| AnonymousResourceLocator === l.target_url }
+        .reduce({}) { |acc, l|
+          (acc[l.literal_rel] ||= []) << {"href" => l.target_url, "templated" => l.templated?}
+          acc }
+    end
 
-      interpreter = HalClient::Interpreter.new(parsed_json, hal_client)
+    def embedded_hash
+      all_links
+        .select(&:embedded?)
+        .reduce({}) { |acc, l|
+          (acc[l.literal_rel] ||= []) << l.target.raw
+          acc }
+    end
 
-      @properties = interpreter.extract_props
-
-      @links_by_rel =
-        interpreter
-        .extract_links
-        .reduce(Hash.new { |h,k| h[k] = Set.new }) { |links_tab, link|
+    def index_links(links)
+      links.reduce(Hash.new { |h,k| h[k] = Set.new }) { |links_tab, link|
           links_tab[link.literal_rel] << link
           links_tab[link.fully_qualified_rel] << link
           links_tab
         }
-    end
-
-    def links_by_rel
-      @links_by_rel || ensure_reified
     end
 
     def_delegators :links, :namespaces
