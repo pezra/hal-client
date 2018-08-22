@@ -13,13 +13,19 @@ class HalClient
     # https://tools.ietf.org/html/draft-kelly-json-hal-07#section-4.1
     RESERVED_PROPERTIES = ['_links', '_embedded'].freeze
 
-    def initialize(parsed_json, hal_client)
+    def initialize(parsed_json, hal_client, location=nil)
       (fail InvalidRepresentationError,
             "Invalid HAL representation: #{parsed_json.inspect}") unless
         hashish?(parsed_json)
 
       @raw = parsed_json
       @hal_client = hal_client
+      @location = location
+    end
+
+    # Returns `HalClient::Representation` version of the json provided
+    def extract_repr()
+      Representation.new(hal_client: hal_client, parsed_json: raw, href: location)
     end
 
     # Returns hash of properties from `parsed_json`
@@ -33,7 +39,7 @@ class HalClient
 
     protected
 
-    attr_reader :raw, :hal_client
+    attr_reader :raw, :hal_client, :location
 
     def hashish?(obj)
       obj.respond_to?(:[]) &&

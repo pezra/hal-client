@@ -116,7 +116,7 @@ class HalClient
     end
 
     def target(vars = {})
-      Representation.new(href: target_url(vars), hal_client: hal_client)
+      RepresentationFuture.new(target_url(vars), hal_client)
     end
 
     # Differing Representations or Addressable::Templates with matching hrefs

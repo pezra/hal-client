@@ -41,7 +41,7 @@ class HalClient
     # Anonymous entries are hard to deal with in a logically clean way. We fudge
     # it a bit by treating anonymous resources with the same raw value as equal.
     def dirty?
-      new_repr = Representation.new(parsed_json: raw)
+      new_repr = Interpreter.new(raw, nil, orig_repr.href).extract_repr
 
       orig_repr.properties != new_repr.properties ||
         sans_anon(orig_repr.all_links) != sans_anon(new_repr.all_links) ||
@@ -87,8 +87,7 @@ class HalClient
     def reject_links(rel, ignore: [], &blk)
       reject_from_section("_links",
                           rel,
-                          ->(l) {Representation.new(href: l["href"],
-                                                    hal_client: hal_client)},
+                          ->(l) {RepresentationFuture.new(l["href"], hal_client)},
                           ignoring(ignore, blk))
     end
 
@@ -108,8 +107,7 @@ class HalClient
     def reject_embedded(rel, ignore: [], &blk)
       reject_from_section("_embedded",
                           rel,
-                          ->(e) {Representation.new(parsed_json: e,
-                                                    hal_client: hal_client)},
+                          ->(e) {Interpreter.new(e, hal_client).extract_repr},
                           ignoring(ignore, blk))
     end
 
