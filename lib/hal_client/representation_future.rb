@@ -29,9 +29,9 @@ class HalClient
     # should not cause an HTTP request.
     def inspect
       if reified?
-        "#<HalClient::RepresentationFuture: #{__getobj__.inspect}>"
+        "#<HalClient::RepresentationFuture #{__getobj__.inspect}>"
       else
-        "#<HalClient::RepresentationFuture: #{href} (unreified)>"
+        "#<HalClient::RepresentationFuture #{href} (unreified)>"
       end
     end
 
@@ -40,10 +40,23 @@ class HalClient
     #
     # ---
     #
-    # We implement this to prevent premature reification. `inspect`ing
-    # should not cause an HTTP request.
-    def pretty_print(_printer=nil)
-      inspect
+    # We implement this to prevent premature
+    # reification. `pretty_print`ing should not cause an HTTP request.
+    def pretty_print(pp)
+      pp.text "#<HalClient::RepresentationFuture"
+
+      if reified?
+        pp.newline
+        pp.text "__getobj__="
+        pp.pp(__getobj__)
+        pp.breakable
+      else
+        pp.breakable
+        pp.text "#{href} (unreified)"
+      end
+
+      pp.breakable(" ")
+      pp.text(">")
     end
 
     attr_reader :href, :hal_client

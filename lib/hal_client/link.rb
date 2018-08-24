@@ -31,10 +31,18 @@ class HalClient
       raise NotImplementedError
     end
 
+    def href_str
+      raise NotImplementedError
+    end
+
     attr_reader :literal_rel, :curie_resolver
 
     def fully_qualified_rel
       curie_resolver.resolve(literal_rel)
+    end
+
+    def rel?(a_rel)
+      self.literal_rel == a_rel || self.fully_qualified_rel == a_rel
     end
 
     # Links with the same href, same rel value, and the same 'templated' value
@@ -100,6 +108,10 @@ class HalClient
     def embedded?
       @embedded
     end
+
+    def href_str
+      target_url
+    end
   end
 
   # Links that are templated.
@@ -129,6 +141,10 @@ class HalClient
 
     def embedded?
       false
+    end
+
+    def href_str
+      tmpl.pattern
     end
 
 
@@ -165,6 +181,7 @@ class HalClient
     alias_method :target, :raise_invalid
     alias_method :templated?, :raise_invalid
     alias_method :embedded?, :raise_invalid
+    alias_method :href_str, :raise_invalid
 
     def hash
       fully_qualified_rel.hash

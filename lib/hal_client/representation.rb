@@ -36,12 +36,13 @@ class HalClient
       # Signature
       #   new(parsed_json:, href: nil, hal_client: nil)
       #   new(href:, hal_client:)
-      #   new(props, links, hal_client)
+      #   new(location, props, links, hal_client)
       #
       def new(*args)
         if args.count == 1 && (opts=args.first).key?(:parsed_json)
           # deprecated options style creation
-          Interpreter.new(opts[:parsed_json], opts[:hal_client], opts[:href]).extract_repr
+          Interpreter.new(opts[:parsed_json], opts[:hal_client],
+                          content_location: opts[:href]).extract_repr
 
         elsif args.count == 1 && args.first.key?(:href)
           # deprecated options style creation
@@ -302,11 +303,26 @@ class HalClient
     end
 
     def inspect
-      %Q|#<#{self.class.name}: @properties=#{properties} @links=#{all_links}">|
+      %Q|#<#{self.class.name} #{href.to_s} @properties=#{properties} @links=#{all_links}">|
     end
 
-    def pretty_print
-      inspect
+    def pretty_print(pp)
+      pp.text "#<#{self.class.name}"
+      pp.fill_breakable
+      pp.text href.to_s
+
+      pp.fill_breakable
+      pp.text "@properties="
+      pp.group_sub do
+        properties.pretty_print(pp)
+      end
+
+      pp.fill_breakable
+      pp.text "@links="
+      pp.group_sub do
+        all_links.pretty_print(pp)
+      end
+      pp.text ">"
     end
 
     # Returns the raw json representation of this representation
@@ -342,9 +358,10 @@ class HalClient
     #
     # Hard to know what to do with embedding. We don't currently know if the 
     def raw
-      hsh = properties
-            .merge("_links" => links_hash,
-                   "_embedded" => embedded_hash)
+      properties.tap do |hsh|
+        hsh.merge!("_links" => links_hash) if links_hash.any?
+        hsh.merge!("_embedded" => embedded_hash) if embedded_hash.any?
+      end
     end
 
     # Return the HalClient used to retrieve this representation
@@ -365,17 +382,27 @@ class HalClient
     def links_hash
       all_links
         .reject{|l| AnonymousResourceLocator === l.target_url }
-        .reduce({}) { |acc, l|
-          (acc[l.literal_rel] ||= []) << {"href" => l.target_url, "templated" => l.templated?}
-          acc }
+        .group_by(&:literal_rel)
+        .reduce({}) { |acc, (rel, links)|
+          link_objs = links.map{|l| {"href" => l.href_str, "templated" => l.templated?} }
+          link_objs = link_objs.first if link_objs.count == 1
+
+          acc[rel] = link_objs
+          acc
+        }
     end
 
     def embedded_hash
       all_links
         .select(&:embedded?)
-        .reduce({}) { |acc, l|
-          (acc[l.literal_rel] ||= []) << l.target.raw
-          acc }
+        .group_by(&:literal_rel)
+        .reduce({}) { |acc, (rel, links)|
+          embedded_objs = links.map{|l| l.target.raw}
+          embedded_objs = embedded_objs.first if embedded_objs.count == 1
+
+          acc[rel] = embedded_objs
+          acc
+        }
     end
 
     def index_links(links)

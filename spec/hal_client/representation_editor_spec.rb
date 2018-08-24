@@ -45,7 +45,7 @@ RSpec.describe HalClient::RepresentationEditor do
     specify { expect(subject.reject_embedded("absent-rel"))
               .to be_equivalent_json_to raw_hal }
 
-    it "removes links matching block but not others" do
+    it "removes embedded links matching block but not others" do
       altered = subject.reject_embedded("replies") {|repr|  "+1" == repr.property("value") }
 
       expect(altered).not_to have_embedded "replies", hash_including("value" => "+1")
@@ -235,7 +235,7 @@ RSpec.describe HalClient::RepresentationEditor do
     match do |actual_json|
       parsed = MultiJson.load(actual_json.to_hal)
 
-      [parsed["_links"].fetch(expected_rel, [])].flatten
+      [parsed.fetch("_links",{}).fetch(expected_rel, [])].flatten
         .any?{|l| expected_target === l }
     end
   end
@@ -251,7 +251,7 @@ RSpec.describe HalClient::RepresentationEditor do
     match do |actual_json|
       parsed = MultiJson.load(actual_json.to_hal)
 
-      [parsed["_embedded"].fetch(expected_rel, [])].flatten
+      [parsed.fetch("_embedded", {}).fetch(expected_rel, [])].flatten
         .any?{|e| expected_target === e }
     end
   end

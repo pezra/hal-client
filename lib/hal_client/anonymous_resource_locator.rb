@@ -8,5 +8,11 @@ class HalClient
     def anonymous?
       true
     end
+
+    def +(other)
+      return other if Addressable::Template === other
+
+      Addressable::URI.parse(other)
+    end
   end
 end

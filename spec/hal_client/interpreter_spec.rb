@@ -81,6 +81,49 @@ RSpec.describe HalClient::Interpreter do
       specify { expect(subject.extract_links).to include link_matching("baz", "http://example.com/baz2") }
     end
 
+    context "with anonymous embedded" do
+      subject { described_class.new(embedded_json, hal_client) }
+      let(:embedded_json) {
+        { "_links" => { "self" => { "href" => "http://example.com/foo" } },
+          "_embedded" => {
+            "bar" => { "name" => "bar" },
+            "baz" => [ { "name" => "baz1" },
+                       { "name" => "baz2" } ]
+          }
+        }
+      }
+
+      specify { expect( subject.extract_repr.related("bar") ).to have(1).items }
+      specify { expect( subject.extract_repr.related("baz") ).to have(2).items }
+      specify { expect(
+                  subject.extract_repr.related("baz")
+                ).to include thing_named "baz1" }
+      specify { expect(
+                  subject.extract_repr.related("baz")
+                ).to include thing_named "baz2" }
+    end
+
+    context "anonymous with anonymous embedded" do
+      subject { described_class.new(embedded_json, hal_client) }
+      let(:embedded_json) {
+        { "_embedded" => {
+            "bar" => { "name" => "bar" },
+            "baz" => [ { "name" => "baz1" },
+                       { "name" => "baz2" } ]
+          }
+        }
+      }
+
+      specify { expect( subject.extract_repr.related("bar") ).to have(1).items }
+      specify { expect( subject.extract_repr.related("baz") ).to have(2).items }
+      specify { expect(
+                  subject.extract_repr.related("baz")
+                ).to include thing_named "baz1" }
+      specify { expect(
+                  subject.extract_repr.related("baz")
+                ).to include thing_named "baz2" }
+    end
+
     context "curies" do
       let(:raw_repr) { <<-HAL }
 { "_links": {
@@ -97,12 +140,52 @@ HAL
       specify { expect(subject.extract_links).to include link_matching("http://example.com/rels/bar", "http://example.com/bar") }
 
     end
+
+    context "relative links" do
+      let(:raw_repr) { <<-HAL }
+{ "_links": {
+    "self": { "href": "/foo" }
+    ,"bar": { "href": "/bar" }
+  }
+}
+HAL
+
+      subject { described_class.new(MultiJson.load(raw_repr), hal_client,
+                                    context_url: "http://example.com/foo") }
+
+      specify { expect(subject.extract_repr.all_links).to include link_matching("bar", "http://example.com/bar") }
+      specify { expect(subject.extract_repr.all_links).to include link_matching("self", "http://example.com/foo") }
+      specify { expect(subject.extract_repr.href.to_s).to eq "http://example.com/foo" }
+
+    end
+
+    context "relative links in non-self identifying representation with known content location" do
+      let(:raw_repr) { <<-HAL }
+{ "_links": {
+    "bar": { "href": "/bar" }
+  }
+}
+HAL
+
+      subject { described_class.new(MultiJson.load(raw_repr), hal_client,
+                                    content_location: "http://example.com/foo") }
+
+      specify { expect(subject.extract_repr.all_links).to include link_matching("bar", "http://example.com/bar") }
+      specify { expect(subject.extract_repr.href.to_s).to eq "http://example.com/foo" }
+    end
+
   end
 
   matcher :link_matching do |rel, target_url|
     match { |actual_link|
+      actual_url_str = if actual_link.target_url.respond_to?(:pattern)
+                         actual_link.target_url.pattern
+                       else
+                         actual_link.target_url.to_s
+                       end
+
       (actual_link.literal_rel == rel || actual_link.fully_qualified_rel == rel) &&
-            actual_link.target_url == target_url
+        actual_url_str == target_url
     }
   end
 
@@ -114,4 +197,9 @@ HAL
     }
   end
 
+  matcher :thing_named do |expected_name|
+    match { |actual_repr|
+      actual_repr["name"] == expected_name
+    }
+  end
 end

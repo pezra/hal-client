@@ -230,7 +230,7 @@ class HalClient
       location = resp.headers["Location"]
 
       begin
-        Interpreter.new(MultiJson.load(resp.to_s), self, location).extract_repr
+        Interpreter.new(MultiJson.load(resp.to_s), self, content_location: location).extract_repr
       rescue MultiJson::ParseError, InvalidRepresentationError
         if location
           # response doesn't have a HAL body but we know what resource

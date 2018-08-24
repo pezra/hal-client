@@ -38,14 +38,22 @@ RSpec.describe HalClient::RepresentationFuture do
   describe "#pretty_print" do
     it "doesn't make a request" do
       req = stub_request(:get, "http://example.com")
-
-      subject.pretty_print(pp_stub)
-
+      pp_str(subject)
       expect(req).not_to have_been_made
     end
 
-    specify { expect( subject.pretty_print(pp_stub) ).to include "http://example.com" }
+    specify {
+      expect( pp_str(subject) ).to include "http://example.com"
+    }
 
-    let(:pp_stub) { nil }
+    def pp_str(obj)
+      out = ""
+      pp = PrettyPrint.new(out)
+
+      obj.pretty_print(pp)
+      pp.flush
+
+      out
+    end
   end
 end

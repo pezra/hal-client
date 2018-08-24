@@ -111,7 +111,18 @@ RSpec.describe "Navigation" do
     expect(destination).to include a_representation_of "http://blog.me/john-doe"
   end
 
-  
+  it "allows following a relative link" do
+    stub_api do
+      deflink("author", from: "http://blog.me/", to: "/john-doe")
+    end
+
+    destination = client.get("http://blog.me/")
+                  .related("author")
+
+    expect(destination).to behave_like_a HalClient::RepresentationSet
+    expect(destination).to include a_representation_of "http://blog.me/john-doe"
+  end
+
 
   # Background
 

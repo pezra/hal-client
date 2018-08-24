@@ -266,7 +266,7 @@ HAL
   specify { expect(repr.properties).to_not include("_links" => 1,
                                                    "_embedded" => 2) }
 
-  specify { expect(subject.href).to eq "http://example.com/foo" }
+  specify { expect(subject.href.to_s).to eq "http://example.com/foo" }
 
   describe "#fetch" do
     context "for existent property" do
@@ -278,7 +278,7 @@ HAL
       subject { repr.fetch "link1" }
       it { is_expected.to have(1).item }
       it "includes related resource representation" do
-        expect(subject.first.href).to eq "http://example.com/bar"
+        expect(subject.first.href.to_s).to eq "http://example.com/bar"
       end
     end
 
@@ -286,7 +286,7 @@ HAL
       subject { repr.fetch "embed1" }
       it { is_expected.to have(1).item }
       it "includes related resource representation" do
-        expect(subject.first.href).to eq "http://example.com/baz"
+        expect(subject.first.href.to_s).to eq "http://example.com/baz"
       end
     end
 
@@ -383,15 +383,15 @@ HAL
   end
 
   specify { expect(repr.related_hrefs "link1")
-      .to contain_exactly "http://example.com/bar" }
+      .to contain_exactly Addressable::URI.parse("http://example.com/bar") }
   specify { expect(repr.related_hrefs "embed1")
-      .to contain_exactly "http://example.com/baz" }
+      .to contain_exactly Addressable::URI.parse("http://example.com/baz") }
   specify { expect { repr.related_hrefs 'wat' }.to raise_exception KeyError }
 
   specify { expect(repr.raw_related_hrefs("templated").map(&:pattern))
       .to contain_exactly "http://example.com/people{?name}" }
   specify { expect(repr.raw_related_hrefs("link1"))
-      .to contain_exactly "http://example.com/bar" }
+      .to contain_exactly Addressable::URI.parse("http://example.com/bar") }
 
   specify { expect(subject.has_related? "link1").to be true }
   specify { expect(subject.related? "link1").to be true }
@@ -493,7 +493,7 @@ HAL
   }
   ,"_embedded": {
     "item": [
-      {"name": "first"}
+      {"name": " first"}
       ,{"name": "second"}
     ]
   }
@@ -560,7 +560,7 @@ HAL
 
   matcher :include_representation_of do |url|
     match { |repr_set|
-      repr_set.any?{|it| it.href == url}
+      repr_set.any?{|it| it.href.to_s == url.to_s}
     }
     failure_message { |repr_set|
       "Expected representation of <#{url}> but found only #{repr_set.map(&:href)}"

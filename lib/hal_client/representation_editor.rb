@@ -14,24 +14,25 @@ class HalClient
   #
   # ```ruby
   #   altered_doc = HalClient::RepresentationEditor.new(some_doc)
-  #     .reject_relate("author") { |it| it["name"]  = "John Plagiarist" }
+  #     .reject_related("author") { |it| it["name"]  = "John Plagiarist" }
   # ```
   class RepresentationEditor
     extend Forwardable
 
     # Initialize a new representation editor.
     #
-    # a_representation - The representation from which you want to
-    #   start. This object will *not* be modified!
-    # raw - Not for public use! Used internally for handling multi-
-    #   staged changes.
-    def initialize(a_representation, raw = a_representation.raw)
-      @orig_repr = a_representation
-      @raw = raw
+    # a_representation - The representation to edit. This object will
+    #   *not* be modified!
+    # original_representation - *PRIVATE* used for multistage editing
+    def initialize(a_representation, original_representation = a_representation)
+      @repr = a_representation
+      @orig_repr = original_representation
     end
-    protected :initialize
 
-    attr_reader :raw
+    # Returns raw (parse json) version of the edited resource
+    def raw
+      repr.raw
+    end
 
     # Returns true if this, or any previous, editor actually changed the hal
     # representation.
@@ -41,11 +42,9 @@ class HalClient
     # Anonymous entries are hard to deal with in a logically clean way. We fudge
     # it a bit by treating anonymous resources with the same raw value as equal.
     def dirty?
-      new_repr = Interpreter.new(raw, nil, orig_repr.href).extract_repr
-
-      orig_repr.properties != new_repr.properties ||
-        sans_anon(orig_repr.all_links) != sans_anon(new_repr.all_links) ||
-        raw_anons(orig_repr.all_links) != raw_anons(new_repr.all_links)
+      orig_repr.properties != repr.properties ||
+        sans_anon(orig_repr.all_links) != sans_anon(repr.all_links) ||
+        raw_anons(orig_repr.all_links) != raw_anons(repr.all_links)
     end
 
     # Returns the raw json representation of this representation
@@ -68,7 +67,7 @@ class HalClient
     #
     # Yields Representation of the target for each link/embedded.
     def reject_related(rel, ignore: [], &blk)
-      reject_links(rel, ignore: ignore, &blk).reject_embedded(rel, ignore: ignore, &blk)
+      reject_embedded(rel, ignore: ignore, &blk).reject_links(rel, ignore: ignore, &blk)
     end
 
     # Returns a RepresentationEditor for a representation like the
@@ -85,10 +84,21 @@ class HalClient
     #
     # Yields Representation of the target for each link.
     def reject_links(rel, ignore: [], &blk)
-      reject_from_section("_links",
-                          rel,
-                          ->(l) {RepresentationFuture.new(l["href"], hal_client)},
-                          ignoring(ignore, blk))
+      blk ||= ->(_target){true}
+
+
+      (candidates, safe)= repr
+                          .all_links
+                          .partition{|link| link.rel?(rel) }
+
+      selected = candidates.reject(&link_checker(blk, ignore))
+
+      new_repr = Representation.new(repr.href,
+                                    repr.properties,
+                                    safe+selected,
+                                    repr.hal_client)
+
+      self.class.new(new_repr, orig_repr)
     end
 
     # Returns a RepresentationEditor for a representation like the
@@ -105,10 +115,24 @@ class HalClient
     #
     # Yields Representation of the target for each embedded.
     def reject_embedded(rel, ignore: [], &blk)
-      reject_from_section("_embedded",
-                          rel,
-                          ->(e) {Interpreter.new(e, hal_client).extract_repr},
-                          ignoring(ignore, blk))
+      blk ||= ->(_target){true}
+
+      (embedded, links) = repr
+                          .all_links
+                          .partition(&:embedded?)
+
+      (candidates, safe)= embedded
+                          .partition{|link| link.rel?(rel) }
+
+      selected = candidates.reject(&link_checker(blk, ignore))
+
+      new_repr = Representation.new(repr.href,
+                                    repr.properties,
+                                    links+safe+selected,
+                                    repr.hal_client)
+
+      self.class.new(new_repr, orig_repr)
+
     end
 
     # Returns a RepresentationEditor exactly like this one except that
@@ -123,13 +147,29 @@ class HalClient
       raise ArgumentError, "target must not be nil or empty" if target.nil? || target.empty?
       templated = opts.fetch(:templated, false)
 
-      link_obj = { "href" => target.to_s }
-      link_obj = link_obj.merge("templated" => true) if templated
+      new_link =
+        if templated
+          tmpl = if target.respond_to?(:pattern)
+                   target
+                 else
+                   Addressable::Template.new(target)
+                 end
 
-      with_new_link = Array(raw.fetch("_links", {}).fetch(rel, [])) + [link_obj]
-      updated_links_section =  raw.fetch("_links", {}).merge(rel => with_new_link)
+          TemplatedLink.new(rel: rel,
+                            template: tmpl,
+                            hal_client: repr.hal_client)
+        else
+          SimpleLink.new(rel: rel,
+                         target: RepresentationFuture.new(target, repr.hal_client),
+                         embedded: false)
+        end
 
-      self.class.new(orig_repr, raw.merge("_links" => updated_links_section))
+      new_repr = Representation.new(repr.href,
+                                    repr.properties,
+                                    repr.all_links + [new_link],
+                                    repr.hal_client)
+
+      self.class.new(new_repr, orig_repr)
     end
 
     # Returns a RepresentationEditor exactly like this one except that
@@ -138,12 +178,33 @@ class HalClient
     # key - The name of the property
     # value - Value to place in the property
     def set_property(key, value)
-      self.class.new(orig_repr, raw.merge(key => value))
+      new_repr = Representation.new(repr.href,
+                                    repr.properties.merge(key => value),
+                                    repr.all_links,
+                                    repr.hal_client)
+
+      self.class.new(new_repr, orig_repr)
     end
 
     protected
 
-    attr_reader :orig_repr
+    attr_reader :orig_repr, :repr
+
+    def link_checker(blk, ignore)
+      if Array(ignore).include?(:broken_links)
+        ->(l) {
+          begin
+            blk.call(l.target)
+          rescue HalClient::HttpError
+            false
+          end
+        }
+      else
+        ->(l) {
+          blk.call(l.target)
+        }
+      end
+    end
 
     def sans_anon(links)
       links.reject { |l| AnonymousResourceLocator === l.raw_href}
