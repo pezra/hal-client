@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.description   = %q{An easy to use interface for REST APIs that use HAL.}
   spec.homepage      = "https://github.com/pezra/hal-client"
   spec.license       = "MIT"
+  spec.required_ruby_version = '~> 2.3'
 
   spec.files         = `git ls-files`.split($/)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }

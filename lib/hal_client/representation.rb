@@ -3,7 +3,7 @@ require 'addressable/template'
 
 require_relative '../hal_client'
 require_relative 'errors'
-require_relative 'representation_set'
+require_relative 'representation_set' 
 require_relative 'interpreter'
 require_relative 'anonymous_resource_locator'
 require_relative 'form'
@@ -57,25 +57,15 @@ class HalClient
 
     # Create a new Representation
     #
-    # location - the location of the resource this represents
+    # location - the `Addressable::URI` of the resource this represents
     # properties - `Hash` of properties
     # links - `Enumerable` of `Link`s
     # hal_client - `HalClient` to use for navigation
     def initialize(location, properties, links, hal_client)
-      @href = location
+      @location = location
       @hal_client = hal_client
       @properties = properties
       @links_by_rel = index_links(links)
-    end
-
-    # Returns a copy of this instance that is safe to use in threaded
-    # environments
-    def clone_for_use_in_different_thread
-      clone.tap do |c|
-        if c.hal_client
-          c.hal_client = c.hal_client.clone_for_use_in_different_thread
-        end
-      end
     end
 
     # Posts a `Representation` or `String` to this resource. Causes
@@ -84,7 +74,7 @@ class HalClient
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#post`
     def post(data, options={})
-      @hal_client.post(href, data, options).tap do
+      hal_client.post(href, data, options).tap do
         stale!
       end
     end
@@ -95,7 +85,7 @@ class HalClient
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#put`
     def put(data, options={})
-      @hal_client.put(href, data, options).tap do
+      hal_client.put(href, data, options).tap do
         stale!
       end
     end
@@ -106,7 +96,7 @@ class HalClient
     # data - a `String` or an object that responds to `#to_hal`
     # options - set of options to pass to `HalClient#patch`
     def patch(data, options={})
-      @hal_client.patch(href, data, options).tap do
+      hal_client.patch(href, data, options).tap do
         stale!
       end
     end
@@ -146,8 +136,11 @@ class HalClient
 
       @properties
     end
-    # Returns the URL of the resource this represents.
-    attr_reader :href
+
+    # Returns the `Addressable::URI` of the resource this represents.
+    attr_reader :location
+
+    alias_method :href, :location
 
     # Returns the value of the specified property or representations
     #   of resources related via the specified link rel or the
@@ -250,22 +243,13 @@ class HalClient
         .map { |l| l.raw_href }
     end
 
-    # Returns an Enumerable of the items in this collection resource
-    # if this is an rfc 6573 collection.
-    #
-    # Raises HalClient::NotACollectionError if this is not a
-    # collection resource.
-    def as_enum
-      Collection.new(self)
-    end
-
     # Returns an Enumerator of the items in the collection resource
     # if this is an rfc 6573 collection.
     #
     # Raises HalClient::NotACollectionError if this is not a
     # collection resource.
     def to_enum(method=:each, *args, &blk)
-      as_enum.to_enum(method, *args, &blk)
+      Collection.new(self).to_enum(method, *args, &blk)
     end
 
     # Returns set of all links in this representation.
@@ -289,6 +273,10 @@ class HalClient
       Form.new(parsed_form_json, hal_client)
     end
 
+    # Returns true iff this representation is invalidated.
+    def stale?
+      @stale
+    end
 
     # Mark this representation as stale. Used to flag representations
     # that have been updated on the server at such.
@@ -340,8 +328,8 @@ class HalClient
     end
 
     def ==(other)
-      if href && other.respond_to?(:href)
-        href == other.href
+      if href && other.respond_to?(:location)
+        href == other.location
       elsif other.respond_to?(:raw)
         @raw == other.raw
       else
@@ -356,7 +344,7 @@ class HalClient
     #
     # ---
     #
-    # Hard to know what to do with embedding. We don't currently know if the 
+    # Hard to know what to do with embedding. We don't currently know if the
     def raw
       properties.tap do |hsh|
         hsh.merge!("_links" => links_hash) if links_hash.any?

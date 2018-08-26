@@ -21,7 +21,8 @@ class HalClient
     #   parsed json represents (if known)
     # context_url - `Addressable::URI` of the container of the
     #   parsed json, if there is one.
-    def initialize(parsed_json, hal_client=nil,
+    def initialize(parsed_json,
+                   hal_client=HalClient.new,
                    content_location: nil,
                    context_url: content_location)
       (fail InvalidRepresentationError,
@@ -56,7 +57,7 @@ class HalClient
       if AnonymousResourceLocator === content_location
         content_location
       else
-        content_location.to_s
+        content_location
       end
     end
 
@@ -170,7 +171,7 @@ class HalClient
       fail(InvalidRepresentationError) unless hashish?(info)
 
       target_pattern = info.fetch("href") { fail InvalidRepresentationError }
-      fq_target_pattern = (base_url + target_pattern).to_s
+      fq_target_pattern = (base_url + target_pattern)
 
       TemplatedLink.new(rel: rel,
                         template: Addressable::Template.new(fq_target_pattern),
@@ -190,7 +191,7 @@ class HalClient
       return nil unless target_url
       target_url = base_url + target_url
 
-      target_repr = RepresentationFuture.new(target_url.to_s, hal_client)
+      target_repr = RepresentationFuture.new(target_url, hal_client)
 
       SimpleLink.new(rel: rel,
                      target: target_repr,

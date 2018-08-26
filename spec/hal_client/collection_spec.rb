@@ -56,8 +56,9 @@ RSpec.describe HalClient::Collection do
       end
 
       it "yields all the items" do
-        yielded = collection.map { |it| it.href }
-        expect(yielded).to eq ["http://example.com/foo", "http://example.com/bar", "http://example.com/baz"]
+        expect( collection ).to contain_exactly(a_representation_of("http://example.com/foo"),
+                                                a_representation_of("http://example.com/bar"),
+                                                a_representation_of("http://example.com/baz"))
       end
 
     end

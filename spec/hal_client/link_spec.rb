@@ -32,7 +32,7 @@ RSpec.describe HalClient::Link do
 
 
   describe "#href" do
-    specify { expect(link.raw_href).to eq('http://example.com/href_1') }
+    specify { expect(link.raw_href).to eq(Addressable::URI.parse('http://example.com/href_1')) }
     specify { expect(templated_link1.raw_href)
               .to eq Addressable::Template.new('http://example.com/people{?name}') }
   end

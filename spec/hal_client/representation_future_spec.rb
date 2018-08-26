@@ -11,6 +11,30 @@ RSpec.describe HalClient::RepresentationFuture do
 
   subject { HalClient::RepresentationFuture.new("http://example.com", HalClient.new) }
 
+  describe "#href" do
+    it "doesn't make a request" do
+      req = stub_request(:get, "http://example.com")
+
+      subject.href
+
+      expect(req).not_to have_been_made
+    end
+
+    specify { expect( subject.href ).to eq "http://example.com" }
+  end
+
+  describe "#location" do
+    it "doesn't make a request" do
+      req = stub_request(:get, "http://example.com")
+
+      subject.location
+
+      expect(req).not_to have_been_made
+    end
+
+    specify { expect( subject.location ).to eq "http://example.com" }
+  end
+
   describe "#to_s" do
     it "doesn't make a request" do
       req = stub_request(:get, "http://example.com")

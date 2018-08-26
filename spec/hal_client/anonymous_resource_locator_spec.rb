@@ -23,8 +23,4 @@ RSpec.describe HalClient::AnonymousResourceLocator do
               ).to eq "http://example.com/foo/{bar}" }
 
   end
-
-  describe "#anonymous?" do
-    specify { expect( subject.anonymous? ).to be true }
-  end
 end

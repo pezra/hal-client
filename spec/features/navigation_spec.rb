@@ -126,11 +126,4 @@ RSpec.describe "Navigation" do
 
   # Background
 
-  matcher :be_representation_of do |expected_url|
-    match do |actual_repr|
-      actual_repr.href == expected_url
-    end
-  end
-
-  alias_matcher :a_representation_of, :be_representation_of
 end
