@@ -2,6 +2,9 @@ class HalClient
   # The representation is not a valid HAL document.
   InvalidRepresentationError = Class.new(StandardError)
 
+  # The representation is known to no longer match the server state.
+  StaleRepresentationError = Class.new(StandardError)
+
   # The representation is not a HAL collection
   NotACollectionError = Class.new(StandardError)
 

@@ -10,7 +10,9 @@ require 'benchmark'
 # method #clone_for_use_in_different_thread to create a copy for each new
 # thread
 class HalClient
+  autoload :Interpreter, 'hal_client/interpreter'
   autoload :Representation, 'hal_client/representation'
+  autoload :RepresentationFuture, 'hal_client/representation_future'
   autoload :RepresentationSet, 'hal_client/representation_set'
   autoload :CurieResolver, 'hal_client/curie_resolver'
   autoload :Link, 'hal_client/link'
@@ -228,13 +230,12 @@ class HalClient
       location = resp.headers["Location"]
 
       begin
-        Representation.new(hal_client: self, parsed_json: MultiJson.load(resp.to_s),
-                           href: location)
+        Interpreter.new(MultiJson.load(resp.to_s), self, content_location: location).extract_repr
       rescue MultiJson::ParseError, InvalidRepresentationError
         if location
           # response doesn't have a HAL body but we know what resource
           # was created so we can be helpful.
-          Representation.new(hal_client: self, href: location)
+          RepresentationFuture.new(location, self)
         else
           # nothing useful to be done
           resp

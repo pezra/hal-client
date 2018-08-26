@@ -27,10 +27,22 @@ class HalClient
       raise NotImplementedError
     end
 
+    def embedded?
+      raise NotImplementedError
+    end
+
+    def href_str
+      raise NotImplementedError
+    end
+
     attr_reader :literal_rel, :curie_resolver
 
     def fully_qualified_rel
       curie_resolver.resolve(literal_rel)
+    end
+
+    def rel?(a_rel)
+      self.literal_rel == a_rel || self.fully_qualified_rel == a_rel
     end
 
     # Links with the same href, same rel value, and the same 'templated' value
@@ -70,10 +82,11 @@ class HalClient
   # Links that are not templated.
   class SimpleLink < Link
 
-    protected def post_initialize(target:)
-      fail(ArgumentError) unless target.kind_of?(HalClient::Representation)
+    protected def post_initialize(target:, embedded:)
+      fail(ArgumentError) unless target.respond_to?(:href)
 
       @target = target
+      @embedded = embedded
     end
 
     def raw_href
@@ -92,6 +105,13 @@ class HalClient
       @target
     end
 
+    def embedded?
+      @embedded
+    end
+
+    def href_str
+      target_url
+    end
   end
 
   # Links that are templated.
@@ -116,8 +136,17 @@ class HalClient
     end
 
     def target(vars = {})
-      Representation.new(href: target_url(vars), hal_client: hal_client)
+      RepresentationFuture.new(target_url(vars), hal_client)
     end
+
+    def embedded?
+      false
+    end
+
+    def href_str
+      tmpl.pattern
+    end
+
 
     # Differing Representations or Addressable::Templates with matching hrefs
     # will get matching hash values, since we are using raw_href and not the
@@ -151,6 +180,8 @@ class HalClient
     alias_method :target_url, :raise_invalid
     alias_method :target, :raise_invalid
     alias_method :templated?, :raise_invalid
+    alias_method :embedded?, :raise_invalid
+    alias_method :href_str, :raise_invalid
 
     def hash
       fully_qualified_rel.hash

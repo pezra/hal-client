@@ -188,6 +188,10 @@ Or install it yourself as:
 
     $ gem install hal-client
 
+## Upgrading from 5.x to 6.x
+
+`HalClient::Representation` become stale after unsafe requests. This means that after calling `#put`, `#post`, etc any future attempts to use the instance will fail with a `HalClient::StaleRepresentationError`.
+
 ## Upgrading from 4.x to 5.x
 
 `HalClient::RepresentationEditor#add_link` now raises if passed nil or empty values. This is the only breaking change.

@@ -2,13 +2,24 @@ module CustomMatchers
   extend RSpec::Matchers::DSL
   matcher :behave_like_a do |expected_class|
     match do |actual_instance|
-      (expected_class.instance_methods - actual_instance.class.instance_methods).empty?
+      (expected_methods(expected_class) - actual_instance.methods).empty?
+    end
+
+    failure_message do |actual_instance|
+      missing_methods = (expected_methods(expected_class) - actual_instance.methods)
+
+      "expected #{actual_instance} to behave like a #{expected_class} but it was missing #{missing_methods.inspect}"
+    end
+
+    def expected_methods(klass)
+      klass.instance_methods - Object.instance_methods
     end
   end
 
   matcher :be_equivalent_json_to do |expected_json|
     match do |actual_json|
-      MultiJson.load(json(expected_json)) == MultiJson.load(json(actual_json))
+      HalClient::Interpreter.new(MultiJson.load(json(expected_json))).extract_repr ==
+        HalClient::Interpreter.new(MultiJson.load(json(actual_json))).extract_repr
     end
 
     protected

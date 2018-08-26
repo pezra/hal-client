@@ -223,6 +223,9 @@ RSpec.describe HalClient do
     subject(:client) { HalClient.new }
     let(:url) { "http://example.com/foo" }
     let(:return_val) { client.post url, post_data }
+    let!(:new_req) { stub_request(:get, "http://example.com/new")
+                     .to_return(headers: {'Content-Type' => "application/hal+json",
+                                          body: "{}"} )}
 
     it "returns a HalClient::Representation" do
       expect(return_val).to be_kind_of HalClient::Representation
@@ -237,7 +240,7 @@ RSpec.describe HalClient do
       }
 
       it "returns a HalClient::Representation" do
-        expect(return_val).to be_kind_of HalClient::Representation
+        expect(return_val).to behave_like_a HalClient::Representation
       end
 
       it "returns representation of new resource" do

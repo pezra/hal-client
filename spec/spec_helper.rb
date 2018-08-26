@@ -71,6 +71,8 @@ end
 
 # hal_client-specific additions
 
+require "pathname"
+
 $LOAD_PATH << Pathname(__FILE__).dirname + "../lib"
 
 require 'webmock/rspec'
@@ -78,6 +80,7 @@ require 'multi_json'
 require 'rspec/collection_matchers'
 
 require 'support/custom_matchers'
+require 'support/api_stubber'
 
 RSpec.configure do |config|
   config.include CustomMatchers
