@@ -194,6 +194,7 @@ Or install it yourself as:
 - All URIs are represented as `Addressable::URI`.
 - `HalClient::Representation#as_enum` removed. Use `HalClient::Representation#to_enum`
 - `HalClient::Representation#clone_for_use_in_different_thread` removed. It didn't actually work, anyway.
+- Drop support for Ruby versions < 2.3
 
 ## Upgrading from 4.x to 5.x
 
