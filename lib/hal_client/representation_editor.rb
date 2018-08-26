@@ -86,7 +86,6 @@ class HalClient
     def reject_links(rel, ignore: [], &blk)
       blk ||= ->(_target){true}
 
-
       (candidates, safe)= repr
                           .all_links
                           .partition{|link| link.rel?(rel) }
@@ -228,41 +227,6 @@ class HalClient
 
     def hal_client
       orig_repr.hal_client
-    end
-
-    def reject_from_section(name, rel, coercion, filter=nil)
-      return self unless raw.fetch(name, {}).has_key?(rel)
-
-      filtered_rel = if filter
-        [raw[name].fetch(rel,[])].flatten
-          .reject{|it| filter.call(coercion.call(it)) }
-      else
-        []
-      end
-
-      new_sec = if filtered_rel.empty?
-                  raw[name].reject{|k,_| rel == k}
-                else
-                  raw[name].merge(rel => filtered_rel )
-                end
-
-      self.class.new(orig_repr, raw.merge(name => new_sec))
-    end
-
-    def ignoring(criteria, filter)
-      Array(criteria)
-        .reduce(filter) {|f, c|
-          case c
-          when :broken_links
-            ->(*args) { begin
-                          f.call(*args)
-                        rescue HalClient::HttpClientError
-                          false
-                        end }
-          else
-            fail ArgumentError, "Unsupported ignore criteria: #{c}"
-          end
-        }
     end
   end
 end
