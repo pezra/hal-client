@@ -88,11 +88,6 @@ class HalClient
   end
   protected :initialize
 
-  # Returns a copy of this instance that is safe to use in threaded environments
-  def clone_for_use_in_different_thread
-    clone.tap { |c| c.clear_clients! }
-  end
-
   # Returns a `Representation` of the resource identified by `url`.
   #
   # url - The URL of the resource of interest.
@@ -272,12 +267,6 @@ class HalClient
     headers = default_entity_and_message_request_headers.merge(options[:override_headers])
 
     base_client_with_headers(headers)
-  end
-
-  # Resets memoized HTTP clients
-  def clear_clients!
-    @base_client = nil
-    @base_client_with_headers = {}
   end
 
   # Returns an HTTP client.
