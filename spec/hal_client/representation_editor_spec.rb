@@ -190,7 +190,7 @@ RSpec.describe HalClient::RepresentationEditor do
                  .new(parsed_json: MultiJson.load(raw_hal),
                       hal_client: hal_client) }
 
-  let(:raw_hal) { <<-HAL }
+  let(:raw_hal) { <<~HAL }
     { "age": 10
       ,"_links": {
         "self"  : { "href": "http://example.com/a_repr" }

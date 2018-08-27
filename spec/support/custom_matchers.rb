@@ -15,11 +15,16 @@ module CustomMatchers
       klass.instance_methods - Object.instance_methods
     end
   end
+  alias_matcher :behave_like_an, :behave_like_a
 
   matcher :be_equivalent_json_to do |expected_json|
     match do |actual_json|
-      HalClient::Interpreter.new(MultiJson.load(json(expected_json))).extract_repr ==
-        HalClient::Interpreter.new(MultiJson.load(json(actual_json))).extract_repr
+      @actual = MultiJson.dump(MultiJson.load(json(actual_json)), :pretty => true)
+
+      expected_repr = HalClient::Interpreter.new(MultiJson.load(json(expected_json))).extract_repr
+      actual_repr = HalClient::Interpreter.new(MultiJson.load(json(actual_json))).extract_repr
+
+      MultiJson.dump(expected_repr.to_json) == MultiJson.dump(actual_repr.to_json)
     end
 
     protected
@@ -43,4 +48,11 @@ module CustomMatchers
       true
     end
   end
+
+  matcher :be_representation_of do |expected_url|
+    match do |actual_repr|
+      actual_repr.location == Addressable::URI.parse(expected_url)
+    end
+  end
+  alias_matcher :a_representation_of, :be_representation_of
 end

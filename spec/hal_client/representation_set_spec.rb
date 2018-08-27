@@ -39,16 +39,16 @@ RSpec.describe HalClient::RepresentationSet do
   describe "#related" do
     context "single target in each member" do
       subject(:returned_val) { repr_set.related("spouse") }
-      it { is_expected.to include_representation_of "http://example.com/foo-spouse" }
-      it { is_expected.to include_representation_of "http://example.com/bar-spouse" }
+      it { is_expected.to include a_representation_of "http://example.com/foo-spouse" }
+      it { is_expected.to include a_representation_of "http://example.com/bar-spouse" }
       it { is_expected.to have(2).items }
     end
 
     context "multiple targets" do
       subject(:returned_val) { repr_set.related("sibling") }
-      it { is_expected.to include_representation_of "http://example.com/foo-brother" }
-      it { is_expected.to include_representation_of "http://example.com/foo-sister" }
-      it { is_expected.to include_representation_of "http://example.com/bar-brother" }
+      it { is_expected.to include a_representation_of "http://example.com/foo-brother" }
+      it { is_expected.to include a_representation_of "http://example.com/foo-sister" }
+      it { is_expected.to include a_representation_of "http://example.com/bar-brother" }
       it { is_expected.to have(3).items }
     end
 

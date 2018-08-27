@@ -5,10 +5,6 @@ class HalClient
     end
     alias_method :to_str, :to_s
 
-    def anonymous?
-      true
-    end
-
     def +(other)
       return other if Addressable::Template === other
 

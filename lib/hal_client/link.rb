@@ -50,25 +50,25 @@ class HalClient
     # without a href (for example anonymous embedded links, are never equal to
     # one another.
     def ==(other)
-      return false if raw_href.nil?
+      return false if raw_href.nil? || AnonymousResourceLocator === raw_href
 
-      return false unless other.respond_to?(:raw_href) &&
+      return false unless other.respond_to?(:href_str) &&
                           other.respond_to?(:fully_qualified_rel) &&
                           other.respond_to?(:templated?)
 
 
-      (raw_href == other.raw_href) &&
+      (href_str == other.href_str) &&
         (fully_qualified_rel == other.fully_qualified_rel) &&
         (templated? == other.templated?)
     end
     alias :eql? :==
 
     # Differing Representations or Addressable::Templates with matching hrefs
-    # will get matching hash values, since we are using raw_href and not the
+    # will get matching hash values, since we are using href_str and not the
     # objects themselves when computing hash
     def hash
       [fully_qualified_rel,
-       raw_href,
+       href_str,
        templated?].hash
     end
 
@@ -89,28 +89,34 @@ class HalClient
       @embedded = embedded
     end
 
+    # Returns `Addressable::URI` or `Addressable::Template` of the link's href.
     def raw_href
       target.href
     end
 
+    # Returns true iff this link is templated.
     def templated?
       false
     end
 
-    def target_url(_vars = {})
-      target.href
-    end
-
-    def target(_vars = {})
-      @target
-    end
-
+    # Returns true iff this links is embedded.
     def embedded?
       @embedded
     end
 
+    # Returns the URI (`Addressable::URI`) targeted by this link.
+    def target_url(_vars = {})
+      target.href
+    end
+
+    # Returns a `HalClient::Representation` of the target of this link.
+    def target(_vars = {})
+      @target
+    end
+
+    # Returns a `String` version of the target URI or URI template of this link.
     def href_str
-      target_url
+      target_url.to_s
     end
   end
 

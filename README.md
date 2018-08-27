@@ -190,7 +190,11 @@ Or install it yourself as:
 
 ## Upgrading from 5.x to 6.x
 
-`HalClient::Representation` become stale after unsafe requests. This means that after calling `#put`, `#post`, etc any future attempts to use the instance will fail with a `HalClient::StaleRepresentationError`.
+- `HalClient::Representation` become stale after unsafe requests. This means that after calling `#put`, `#post`, etc any future attempts to use the instance will fail with a `HalClient::StaleRepresentationError`.
+- All URIs are represented as `Addressable::URI`.
+- `HalClient::Representation#as_enum` removed. Use `HalClient::Representation#to_enum`
+- `HalClient#clone_for_use_in_different_thread` and`HalClient::Representation#clone_for_use_in_different_thread` removed. They didn't actually work.
+- Drop support for Ruby versions < 2.3
 
 ## Upgrading from 4.x to 5.x
 
