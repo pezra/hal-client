@@ -56,6 +56,20 @@ RSpec.describe HalClient::Form do
       }
     end
 
+    context "POST form w/ nested field path and json content type" do
+      subject { HalClient::Form.new(post_form_with_nested_field_path_and_json_content_type, a_client) }
+
+      specify {
+        expect{
+          subject.submit(rating: "ok", description: "pretty good")
+        }.to make_http_request(
+               stub_request(:post, subject.target_url)
+               .with(body: { container: {rating: "ok", description: "pretty good"} },
+                     headers: { "Content-Type" => "application/json" })
+             )
+      }
+    end
+
   end
 
   # Background
@@ -103,6 +117,25 @@ RSpec.describe HalClient::Form do
         { "name" => "description",
           "type" => "text",
           "path" => "/description" }
+      ]
+    }
+  end
+
+  def post_form_with_nested_field_path_and_json_content_type
+    { "_links" => {
+        "target" => {
+          "href" => "http://example.com/"
+        }
+      },
+      "method" => "POST",
+      "contentType" => "application/json",
+      "fields" => [
+        { "name" => "rating",
+          "type" => "number",
+          "path" => "/container/rating" },
+        { "name" => "description",
+          "type" => "text",
+          "path" => "/container/description" }
       ]
     }
   end

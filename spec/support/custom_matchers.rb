@@ -1,5 +1,6 @@
 module CustomMatchers
   extend RSpec::Matchers::DSL
+
   matcher :behave_like_a do |expected_class|
     match do |actual_instance|
       (expected_methods(expected_class) - actual_instance.methods).empty?

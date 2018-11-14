@@ -98,11 +98,19 @@ class HalClient
     end
 
     def json_inject_answer(body, answer, path)
-      patch = Hana::Patch.new [
-        { 'op' => 'add', 'path' => path, 'value' => answer }
-      ]
+      ptr = Hana::Pointer.new(path).entries
 
-      patch.apply(body)
+      target_container = if ptr.count == 1
+                           body
+                         else
+                           ptr[0..-2].inject(body) { |ctx, segment|
+                             ctx.fetch(segment) { ctx[segment] = {} }
+                           }
+                         end
+
+      target_container[ptr.last] = answer
+
+      body
     end
   end
 end
