@@ -8,7 +8,7 @@ class HalClient
       @literal_rel = rel
       @curie_resolver = curie_resolver
 
-      post_initialize(opts)
+      post_initialize(**opts)
     end
 
     def raw_href
